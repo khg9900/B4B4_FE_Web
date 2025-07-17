@@ -1,10 +1,17 @@
-function Dashboard() {
+import { Box, CssBaseline } from '@mui/material';
+import Sidebar from '../components/SideBar';
+import Topbar from '../components/Topbar';
+import DisasterTable from '../components/DisasterTable';
+
+export default function DashboardPage() {
   return (
-    <div style={{ padding: '2rem' }}>
-      <h2>관리자 대시보드</h2>
-      <p>환영합니다, 관리자님!</p>
-    </div>
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#ffffff' }}>
+      <CssBaseline />
+      <Sidebar />
+      <Box component="main" sx={{ flexGrow: 1 }}>
+        <Topbar />
+        <DisasterTable />
+      </Box>
+    </Box>
   );
 }
-
-export default Dashboard;
