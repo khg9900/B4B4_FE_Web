@@ -58,10 +58,10 @@ export default function LoginPage() {
             sx={{
               '& .MuiOutlinedInput-root': {
                 '&:hover fieldset': {
-                  borderColor: '#ff6b00',
+                  borderColor: '#ff7c33',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: '#ff6b00',
+                  borderColor: '#ff7c33',
                 },
               },
             }}
@@ -76,10 +76,10 @@ export default function LoginPage() {
             sx={{
               '& .MuiOutlinedInput-root': {
                 '&:hover fieldset': {
-                  borderColor: '#ff6b00',
+                  borderColor: '#ff7c33',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: '#ff6b00',
+                  borderColor: '#ff7c33',
                 },
               },
             }}
@@ -89,9 +89,9 @@ export default function LoginPage() {
             control={
               <Checkbox
                 sx={{
-                  color: '#ff6b00',
+                  color: '#ff7c33',
                   '&.Mui-checked': {
-                    color: '#ff6b00',
+                    color: '#ff7c33',
                   },
                   padding: '5px',
                 }}
@@ -112,7 +112,7 @@ export default function LoginPage() {
             onClick={handleLogin}
             fullWidth
             sx={{
-              background: 'linear-gradient(to right, #ff6b00, #ff8800)',
+              background: 'linear-gradient(to right, #ff7c33, #ff8800)',
               height: 48,
               fontWeight: 'bold',
               borderRadius: 1,
@@ -132,8 +132,8 @@ export default function LoginPage() {
             variant="outlined"
             fullWidth
             sx={{
-              borderColor: '#ff6b00',
-              color: '#ff6b00',
+              borderColor: '#ff7c33',
+              color: '#ff7c33',
               height: 48,
               fontWeight: 'bold',
               borderRadius: 1,
