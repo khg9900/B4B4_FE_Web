@@ -1,10 +1,11 @@
+// src/components/VolunteerForm.tsx
 import { useMemo, useState } from 'react';
 import {
   Box, Stack, TextField, FormControl, InputLabel, Select, MenuItem,
   Button, Typography, InputAdornment, Alert
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import { POST_CATEGORIES, type PostCategory } from '../types/volunteer';
+import { POST_CATEGORIES, type PostCategory, type CreatePostRequest } from '../types/volunteer';
 
 /** 백엔드 Enum 매핑 (KO → EN) */
 const CAT_KO_TO_EN: Record<PostCategory, 'RECRUITMENT' | 'SUPPORT'> = {
@@ -14,7 +15,7 @@ const CAT_KO_TO_EN: Record<PostCategory, 'RECRUITMENT' | 'SUPPORT'> = {
 
 type Props = {
   /** 등록 API. (payload는 백엔드 CreatePostRequest 구조) */
-  createApi: (payload: any) => Promise<any>;
+  createApi: (payload: CreatePostRequest) => Promise<any>;
   /** 제출 성공 시 콜백 */
   onSubmitSuccess?: (created: any) => void;
   /** 취소 버튼 클릭 */
@@ -41,7 +42,7 @@ export default function VolunteerForm({
   const [category, setCategory] = useState<PostCategory>('봉사활동 모집');
 
   // 일정
-  const [volunteerDate, setVolunteerDate] = useState('');          // YYYY-MM-DD
+  const [volunteerDate, setVolunteerDate] = useState('');           // YYYY-MM-DD
   const [volunteerStartTime, setVolunteerStartTime] = useState(''); // HH:mm
   const [volunteerEndTime, setVolunteerEndTime] = useState('');     // HH:mm
 
@@ -52,26 +53,30 @@ export default function VolunteerForm({
   const [province, setProvince] = useState(''); // 시/도
   const [city, setCity] = useState('');         // 구/군
   const [placeName, setPlaceName] = useState('');
-  const [latitude, setLatitude] = useState<number | ''>('');
-  const [longitude, setLongitude] = useState<number | ''>('');
+
+  // ⬇️ 위/경도: 문자열로 받아서 스피너 제거 + 소수 자유 입력
+  const [latitude, setLatitude] = useState<string>('');   // 예: "37.4979"
+  const [longitude, setLongitude] = useState<string>(''); // 예: "127.0276"
 
   // 인원/팀
   const [totalCapacity, setTotalCapacity] = useState<number | ''>('');
-  const [teamCount, setTeamCount] = useState<number | ''>(''); // = teamSize(백엔드)
+  const [teamCount, setTeamCount] = useState<number | ''>(''); // 사용자가 입력: "팀 개수"
+
+  // 출석 정책
+  const [attendanceStartTime, setAttendanceStartTime] = useState(''); // HH:mm
+  const [attendanceEndTime, setAttendanceEndTime] = useState('');     // HH:mm
+  const [attendanceRadius, setAttendanceRadius] = useState<number | ''>(100); // ⬅️ 기본값 100
+
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string>('');
+
+  // 팀당 정원(= teamSize)
   const perTeam = useMemo(() => {
     const total = typeof totalCapacity === 'number' ? totalCapacity : NaN;
     const teams = typeof teamCount === 'number' ? teamCount : NaN;
     if (!Number.isFinite(total) || !Number.isFinite(teams) || teams <= 0) return 0;
     return Math.floor(total / teams);
   }, [totalCapacity, teamCount]);
-
-  // 출석 정책 (최소 시간 제거)
-  const [attendanceStartTime, setAttendanceStartTime] = useState(''); // HH:mm
-  const [attendanceEndTime, setAttendanceEndTime] = useState('');     // HH:mm
-  const [attendanceRadius, setAttendanceRadius] = useState<number | ''>('');
-
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string>('');
 
   // --- 유효성/제출 가능 여부 ---
   const allRequiredFilled = useMemo(() => {
@@ -83,7 +88,7 @@ export default function VolunteerForm({
     const reqNumbersOk =
       typeof totalCapacity === 'number' && totalCapacity > 0 &&
       typeof teamCount === 'number' && teamCount > 0 &&
-      typeof attendanceRadius === 'number' && attendanceRadius >= 0;
+      typeof attendanceRadius === 'number' && attendanceRadius >= 100; // ⬅️ 최소 100
 
     return reqStrings.every(Boolean) && reqNumbersOk;
   }, [
@@ -99,9 +104,13 @@ export default function VolunteerForm({
 
   const isValid = allRequiredFilled && divisible;
 
-  // --- 헬퍼: 시간 결합 (HH:mm → YYYY-MM-DDTHH:mm:00) ---
+  // --- 헬퍼들 ---
+  /** 'HH:mm' → 'HH:mm:ss' */
+  const toHHmmss = (t: string) => (t && /^\d{2}:\d{2}$/.test(t) ? `${t}:00` : t || '00:00:00');
+
+  /** HH:mm → 'YYYY-MM-DDTHH:mm:00' */
   const toIsoDateTime = (date: string, hhmm: string) =>
-    `${date}T${hhmm.length === 5 ? hhmm : '00:00'}:00`;
+    `${date}T${hhmm && hhmm.length === 5 ? hhmm : '00:00'}:00`;
 
   // --- 제출 ---
   const handleSubmit = async () => {
@@ -112,30 +121,34 @@ export default function VolunteerForm({
     }
     setSubmitting(true);
     try {
-      // 백엔드 CreatePostRequest 규격에 맞게 페이로드 구성
-      const payload = {
+      // 위/경도 문자열 → number (실패 시 0)
+      const latNum = Number.isFinite(parseFloat(latitude)) ? parseFloat(latitude) : 0;
+      const lngNum = Number.isFinite(parseFloat(longitude)) ? parseFloat(longitude) : 0;
+
+      // 백엔드 CreatePostRequest 규격으로 페이로드 구성
+      const payload: CreatePostRequest = {
         title,
         content,
-        volunteerDate,                // LocalDate
-        volunteerStartTime,           // LocalTime (HH:mm)
-        volunteerEndTime,             // LocalTime (HH:mm)
-        recruitmentStartDate,         // LocalDate
-        recruitmentEndDate,           // LocalDate
-        totalCapacity,                // number
-        teamSize: teamCount,          // number (백엔드 명칭)
-        category: CAT_KO_TO_EN[category], // 'RECRUITMENT' | 'SUPPORT'
+        volunteerDate,                                   // YYYY-MM-DD
+        volunteerStartTime: toHHmmss(volunteerStartTime), // HH:mm:ss
+        volunteerEndTime:   toHHmmss(volunteerEndTime),   // HH:mm:ss
+        recruitmentStartDate,
+        recruitmentEndDate,
+        totalCapacity: totalCapacity as number,
+        // teamSize는 "팀당 정원"이어야 함 (총 인원 / 팀 개수)
+        teamSize: perTeam,
+        category: CAT_KO_TO_EN[category],
         location: {
           province,
           city,
-          placeName: placeName || null,
-          latitude: typeof latitude === 'number' ? latitude : null,
-          longitude: typeof longitude === 'number' ? longitude : null,
+          placeName: placeName || '',
+          latitude: latNum,
+          longitude: lngNum,
         },
         attendancePolicy: {
-          // 백엔드가 LocalDateTime을 원한다면 아래처럼 날짜와 시간 결합
           checkinStart: toIsoDateTime(volunteerDate, attendanceStartTime),
           checkinEnd:   toIsoDateTime(volunteerDate, attendanceEndTime),
-          allowedRadiusM: typeof attendanceRadius === 'number' ? attendanceRadius : 0,
+          allowedRadiusM: typeof attendanceRadius === 'number' ? attendanceRadius : 100,
         },
       };
 
@@ -148,13 +161,8 @@ export default function VolunteerForm({
     }
   };
 
-  // --- 렌더 ---
-  const Wrapper = framed ? Box : ({ children }: { children: React.ReactNode }) => <>{children}</>;
-
   return (
-    <Wrapper
-      sx={framed ? { p: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 } : undefined}
-    >
+    <Box sx={framed ? { p: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 } : undefined}>
       <Stack spacing={2.5}>
         {errorMsg && <Alert severity="error">{errorMsg}</Alert>}
 
@@ -263,20 +271,24 @@ export default function VolunteerForm({
           value={placeName}
           onChange={(e) => setPlaceName(e.target.value)}
         />
+
+        {/* 위도/경도: 소수 입력 + 스피너 없음 */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
             fullWidth
-            type="number"
             label="위도"
             value={latitude}
-            onChange={(e) => setLatitude(e.target.value === '' ? '' : Number(e.target.value))}
+            onChange={(e) => setLatitude(e.target.value)}
+            inputMode="decimal"
+            placeholder="예: 37.4979"
           />
           <TextField
             fullWidth
-            type="number"
             label="경도"
             value={longitude}
-            onChange={(e) => setLongitude(e.target.value === '' ? '' : Number(e.target.value))}
+            onChange={(e) => setLongitude(e.target.value)}
+            inputMode="decimal"
+            placeholder="예: 127.0276"
           />
         </Stack>
 
@@ -300,15 +312,15 @@ export default function VolunteerForm({
             helperText={
               typeof totalCapacity === 'number' && typeof teamCount === 'number' && teamCount > 0
                 ? (divisible
-                    ? `팀당 정원은 자동 계산: ${perTeam}명`
+                    ? `팀당 정원 자동 계산: ${perTeam}명`
                     : '총 인원이 팀 개수로 나누어떨어지지 않습니다.')
-                : '팀 개수를 입력하면 팀당 정원이 자동으로 계산됩니다.'
+                : '팀 개수를 입력하면 팀당 정원이 자동 계산됩니다.'
             }
             error={Boolean(totalCapacity) && Boolean(teamCount) && !divisible}
           />
         </Stack>
 
-        {/* 출석 정책 (최소 시간 삭제) */}
+        {/* 출석 정책 */}
         <Typography variant="h6" sx={{ mt: 1 }}>
           출석 정책
         </Typography>
@@ -332,11 +344,13 @@ export default function VolunteerForm({
           <TextField
             fullWidth
             type="number"
-            inputProps={{ min: 0 }}
+            inputProps={{ min: 100 }} // ⬅️ 최소 100
             label="출석 인정 반경"
             value={attendanceRadius}
             onChange={(e) => setAttendanceRadius(e.target.value === '' ? '' : Number(e.target.value))}
             InputProps={{ endAdornment: <InputAdornment position="end">m</InputAdornment> }}
+            helperText="최소 100m 이상"
+            error={typeof attendanceRadius === 'number' && attendanceRadius < 100}
           />
         </Stack>
 
@@ -354,6 +368,6 @@ export default function VolunteerForm({
           </Stack>
         )}
       </Stack>
-    </Wrapper>
+    </Box>
   );
 }

@@ -1,13 +1,14 @@
 import AppDialog from './AppDialog';
 import VolunteerForm from './VolunteerForm';
-import type { VolunteerPostCreateReq } from '../types/volunteer';
 import { createVolunteerPost as realCreate } from '../api/volunteerPosts';
+import type { CreatePostRequest } from '../types/volunteer';
 
 type Props = {
   open: boolean;
   onClose: () => void;
   onCreated?: (created: any) => void;
-  createApi?: (payload: VolunteerPostCreateReq) => Promise<any>; // 목/실서버 주입
+  /** 테스트나 목 API 주입용. 생략 시 실제 API 사용 */
+  createApi?: (payload: CreatePostRequest) => Promise<any>;
 };
 
 export default function VolunteerCreateModal({
@@ -18,8 +19,8 @@ export default function VolunteerCreateModal({
   return (
     <AppDialog open={open} onClose={onClose} title="새 게시글 등록" maxWidth="md">
       <VolunteerForm
-        framed={false}          // ← 카드/내부 헤더 제거
-        showButtons={true}      // ← 모달 하단 버튼은 폼 내부에서 처리
+        framed={false}
+        showButtons={true}
         createApi={runCreate}
         submitLabel="등록"
         onCancel={onClose}

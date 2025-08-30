@@ -24,10 +24,9 @@ function toDetailData(p: ListPost): DetailPost {
     title: p.title,
     content: '',
     status: p.status,
-    totalCapacity: Number(p.capacity) || 0,
+    totalCapacity: Number(p.totalCapacity) || 0,
     teamCount: 5,
     perTeamCapacity: 0,
-    appliedCount: Number(p.appliedCount) || 0,
     location: p.location,
     placeName: '',
     latitude: 0,
@@ -354,7 +353,7 @@ export default function VolunteerTable({ rows, onRowClick, onSearch }: Volunteer
               </TableCell>
               <TableCell sx={{ color: '#fff' }} align="center">지역</TableCell>
               <TableCell sx={{ color: '#fff' }} align="center">봉사 유형</TableCell>
-              <TableCell sx={{ color: '#fff', whiteSpace: 'pre-line', lineHeight: 1.2 }} align="center">{'모집 인원'}</TableCell>
+              <TableCell sx={{ color: '#fff', whiteSpace: 'pre-line', lineHeight: 1.2 }} align="center">모집 인원</TableCell>
               <TableCell sx={{ color: '#fff' }} align="center" sortDirection={sortKey === 'recruitment' ? sortDir : false}>
                 <TableSortLabel
                   active={sortKey === 'recruitment'}

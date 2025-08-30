@@ -12,8 +12,7 @@ export interface ListPost {
   volunteerDate: string;        // YYYY-MM-DD
   location: string;             // 예: "서울특별시 강남구"
   category: PostCategory;
-  appliedCount: number;
-  capacity: number;
+  totalCapacity: number;
   recruitmentStartDate: string; // YYYY-MM-DD
   recruitmentEndDate: string;   // YYYY-MM-DD
   status: PostStatus;
