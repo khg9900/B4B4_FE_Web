@@ -1,5 +1,5 @@
 import { Box, CssBaseline } from '@mui/material';
-import Sidebar from '../components/SideBar';
+import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import DisasterTable from '../components/DisasterTable';
 

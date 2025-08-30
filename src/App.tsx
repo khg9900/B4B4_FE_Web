@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Post from './pages/VolunteerPosts'
 import NotFound from './pages/NotFound';
 import RequireAuth from './components/RequireAuth';
 import { ThemeProvider } from '@mui/material/styles';
@@ -23,11 +24,20 @@ function App() {
               </RequireAuth>
             }
           />
+          <Route
+            path="/posts"
+            element={
+              <RequireAuth>
+                <Post />
+              </RequireAuth>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
   );
+  // return <Post />;
 }
 
 export default App;
