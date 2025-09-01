@@ -1,18 +1,17 @@
-// src/components/RequireAuth.tsx
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { getAccessToken } from '../auth/tokenStore';
 
 interface Props {
-  children: JSX.Element;
+  children: ReactNode;
 }
 
-function RequireAuth({ children }: Props) {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+export default function RequireAuth({ children }: Props) {
+  const location = useLocation();
+  const at = getAccessToken();
 
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+  if (!at) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
-
-  return children;
+  return <>{children}</>;
 }
-
-export default RequireAuth;

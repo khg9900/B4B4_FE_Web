@@ -40,22 +40,19 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      // 백엔드 로그인 (Vite 프록시 + axios baseURL('/api') 기준 → /api/auth/login)
-      const res = await api.post('/auth/login', {
-        // 백엔드가 username을 받는다면 키만 바꿔주세요. (예: { username: email, password })
-        email,
-        password,
-      });
+      // 백엔드 로그인
+      const res = await api.post('/auth/login', { email, password });
 
-      const payload = res.data?.payload ?? res.data;
-      const accessToken: string | undefined = payload?.accessToken;
-      const refreshToken: string | undefined = payload?.refreshToken;
-
-      if (!accessToken) {
-        throw new Error('토큰이 응답에 없습니다.');
+      // payload 안전하게 접근
+      const payload = res.data?.payload;
+      if (!payload?.accessToken) {
+        throw new Error(res.data?.message || '토큰이 응답에 없습니다.');
       }
 
-      // 토큰 저장 (localStorage + 메모리)
+      // 구조 분해로 토큰 가져오기
+      const { accessToken, refreshToken } = payload;
+
+      // 토큰 저장 (메모리 + localStorage)
       saveTokens(accessToken, refreshToken);
 
       // 아이디 저장 체크
@@ -65,8 +62,10 @@ export default function LoginPage() {
         localStorage.removeItem('savedId');
       }
 
-      // 로그인 성공 후 목록 페이지로 이동
+      // 로그인 성공 후 목록 페이지 이동
+      console.log('navigate to /posts now');
       navigate('/posts');
+
     } catch (e: any) {
       const msg =
         e?.response?.data?.message ||
@@ -190,7 +189,6 @@ export default function LoginPage() {
               '&:hover': { backgroundColor: '#ffffff', borderColor: '#e65c00' },
               '&:focus': { outline: 'none' },
             }}
-            // onClick={() => navigate('/signup')} // 회원가입 연결 시
           >
             회원가입
           </Button>

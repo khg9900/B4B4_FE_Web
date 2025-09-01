@@ -7,15 +7,15 @@ import VolunteerCreateModal from '../components/VolunteerCreateModal';
 
 import { fetchMyPosts, fetchPostDetail, updateVolunteerPost } from '../api/volunteerPosts';
 import { toListPostFromMy } from '../adapters/volunteer';
-import type { ListPost, DetailPost, MyPostQuery } from '../types/volunteer';
+import type { ListPost, DetailPost, MyPostQuery, PostStatusEN, PostCategoryEN } from '../types/volunteer';
 
 // UI(KO) → 서버(EN) 매핑 (검색용)
-const STATUS_KO_TO_EN: Record<string, string> = {
+const STATUS_KO_TO_EN: Record<string, PostStatusEN> = {
   '모집 중': 'OPEN',
   '모집 마감': 'CLOSED',
   '봉사 완료': 'COMPLETED',
 };
-const CATEGORY_KO_TO_EN: Record<string, string> = {
+const CATEGORY_KO_TO_EN: Record<string, PostCategoryEN> = {
   '봉사활동 모집': 'RECRUITMENT',
   '구호물품 지원': 'SUPPORT',
 };
@@ -57,17 +57,19 @@ export default function Post() {
     volunteerFrom?: string;
     volunteerTo?: string;
   }) => {
-    const next: MyPostQuery = {
+    const statusEN = filters.status ? STATUS_KO_TO_EN[filters.status] : undefined;
+    const categoryEN = filters.category ? CATEGORY_KO_TO_EN[filters.category] : undefined;
+
+    setQuery({
       ...query,
       page: 0,
       province: filters.province || undefined,
       city: filters.city || undefined,
-      status: filters.status ? (STATUS_KO_TO_EN[filters.status] ?? filters.status) : undefined,
-      category: filters.category ? (CATEGORY_KO_TO_EN[filters.category] ?? filters.category) : undefined,
+      status: statusEN,
+      category: categoryEN,
       volunteerStartDate: filters.volunteerFrom || undefined,
       volunteerEndDate: filters.volunteerTo || undefined,
-    };
-    setQuery(next);
+    });
   }, [query]);
 
   const handleRowClick = useCallback(async (id: number) => {
@@ -84,7 +86,6 @@ export default function Post() {
     }
   }, []);
 
-  // 저장: PATCH → 목록 리프레시
   const handleSaveDetail = useCallback(async (next: DetailPost) => {
     if (next.id == null) {
       alert('게시글 ID가 없습니다.');
