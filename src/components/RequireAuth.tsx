@@ -1,3 +1,4 @@
+// src/components/RequireAuth.tsx
 import { Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { getAccessToken } from '../auth/tokenStore';

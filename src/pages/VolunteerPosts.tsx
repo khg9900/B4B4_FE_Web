@@ -85,7 +85,7 @@ export default function Post() {
       setDetailLoading(false);
     }
   }, []);
-
+    // 저장: PATCH → 목록 리프레시
   const handleSaveDetail = useCallback(async (next: DetailPost) => {
     if (next.id == null) {
       alert('게시글 ID가 없습니다.');

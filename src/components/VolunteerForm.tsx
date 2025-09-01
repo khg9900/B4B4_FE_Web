@@ -1,3 +1,4 @@
+// src/components/VolunteerForm.tsx
 import { useMemo, useState } from 'react';
 import {
   Box, Stack, TextField, FormControl, InputLabel, Select, MenuItem,
@@ -7,6 +8,7 @@ import type { SelectChangeEvent } from '@mui/material';
 import { POST_CATEGORIES, type PostCategory, type CreatePostRequest } from '../types/volunteer';
 import LocationPicker from './LocationPicker';
 
+/** 백엔드 Enum 매핑 (KO → EN) */
 const CAT_KO_TO_EN: Record<PostCategory, 'RECRUITMENT' | 'SUPPORT'> = {
   '봉사활동 모집': 'RECRUITMENT',
   '구호물품 지원': 'SUPPORT',
