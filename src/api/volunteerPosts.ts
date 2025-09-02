@@ -1,4 +1,3 @@
-// ../api/volunteerPosts.ts
 import { api } from './http';
 import { toPageFromMy, toDetail, toUpdateRequest } from '../adapters/volunteer';
 import type {
@@ -7,8 +6,6 @@ import type {
   MyPostQuery,
   TeamStatus
 } from '../types/volunteer';
-
-/* ====== 기존 코드 (유지) ====== */
 
 /** 내 글 목록 조회 */
 export async function fetchMyPosts(params: MyPostQuery = {}) {
@@ -40,6 +37,7 @@ export async function fetchPostTeams(postId: number): Promise<TeamStatus[]> {
   const res = await api.get(`/post/${postId}/teams`);
   const payload = res.data?.payload ?? res.data;
   const teams = Array.isArray(payload?.teams) ? payload.teams : [];
+  // 정렬(팀 번호 오름차순) 및 안전 매핑
   return teams
     .map((t: any) => ({
       teamId: Number(t.teamId),
@@ -49,7 +47,6 @@ export async function fetchPostTeams(postId: number): Promise<TeamStatus[]> {
     }))
     .sort((a: TeamStatus, b: TeamStatus) => a.teamNumber - b.teamNumber);
 }
-
 /* ====== 추가 코드 (신규 API 및 타입) ====== */
 
 export type CheckinStatus =
