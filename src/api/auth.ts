@@ -1,6 +1,7 @@
 // src/api/auth.ts
 import { api } from './http';
 import { saveTokens, clearTokens } from '../auth/tokenStore';
+import { clearMyInfoCache } from './user';
 
 type LoginResp = {
   accessToken: string;
@@ -17,6 +18,13 @@ export async function login(email: string, password: string) {
   return payload;
 }
 
-export function logout() {
-  clearTokens();
+export async function logout() {
+  try {
+    await api.post('/auth/logout');
+  } catch (e) {
+    console.warn('[logout] ignore error:', e);
+  } finally {
+    clearTokens();
+    clearMyInfoCache();
+  }
 }

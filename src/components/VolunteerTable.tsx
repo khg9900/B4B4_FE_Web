@@ -3,8 +3,9 @@ import React, { useMemo, useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Button, Stack, Box, TextField, Typography, Autocomplete,
-  ToggleButton, ToggleButtonGroup, TableSortLabel
+  ToggleButton, ToggleButtonGroup, Select, MenuItem
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import VolunteerDetailModal from './VolunteerDetailModal';
@@ -18,15 +19,15 @@ import 'dayjs/locale/ko';
 
 type DetailPost = React.ComponentProps<typeof VolunteerDetailModal>['data'];
 
+// 목록 행 → 상세 모달에 넣을 최소 데이터 매핑
 function toDetailData(p: ListPost): DetailPost {
   return {
     id: p.id,
     title: p.title,
     content: '',
+    category: p.category,
     status: p.status,
-    totalCapacity: Number(p.totalCapacity) || 0,
-    teamCount: 5,
-    perTeamCapacity: 0,
+    totalCapacity: Number((p as any).totalCapacity ?? 0),
     location: p.location,
     placeName: '',
     latitude: 0,
@@ -38,14 +39,8 @@ function toDetailData(p: ListPost): DetailPost {
     attendanceStartTime: '',
     attendanceEndTime: '',
     attendanceRadius: 0,
-    minAttendanceMinutes: 0,
-    teams: [],
   };
 }
-
-type SortKey = 'volunteerDate' | 'recruitment';
-type SortDir = 'asc' | 'desc';
-const toISODate = (d: Dayjs | null) => (d ? d.format('YYYY-MM-DD') : '');
 
 type VolunteerTableProps = {
   rows: ListPost[];
@@ -58,66 +53,73 @@ type VolunteerTableProps = {
     volunteerFrom?: string;
     volunteerTo?: string;
   }) => void;
+
+  // 하단 컨트롤
+  page?: number;               // 0-based
+  size?: number;
+  onSizeChange?: (size: number) => void;
 };
 
-export default function VolunteerTable({ rows, onRowClick, onSearch }: VolunteerTableProps) {
+const toISODate = (d: Dayjs | null) => (d ? d.format('YYYY-MM-DD') : '');
+
+// "서울특별시 강남구" → { province: "서울특별시", city: "강남구" }
+function parseLocation(loc?: string) {
+  if (!loc) return { province: '', city: '' };
+  const parts = loc.trim().split(/\s+/);
+  const province = parts[0] ?? '';
+  const city = parts.slice(1).join(' ') || '';
+  return { province, city };
+}
+
+export default function VolunteerTable({
+  rows,
+  onRowClick,
+  onSearch,
+  page = 0,
+  size = 20,
+  onSizeChange,
+}: VolunteerTableProps) {
   const [selectedPost, setSelectedPost] = useState<DetailPost | null>(null);
   const [open, setOpen] = useState(false);
 
-  const [provinceFilter, setProvinceFilter] = useState<string>(''); 
-  const [cityFilter, setCityFilter] = useState<string>('');         
+  // ── 상단 필터 상태(조회 버튼 눌렀을 때만 서버로 전달) ──
+  const [provinceFilter, setProvinceFilter] = useState<string>(''); // 시/도
+  const [cityFilter, setCityFilter] = useState<string>('');         // 시·군·구
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [volStart, setVolStart] = useState<Dayjs | null>(null);
   const [volEnd, setVolEnd] = useState<Dayjs | null>(null);
-  const [volFrom, setVolFrom] = useState<string>(''); 
-  const [volTo, setVolTo] = useState<string>('');     
+  const [volFrom, setVolFrom] = useState<string>('');
+  const [volTo, setVolTo] = useState<string>('');
 
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
-
-  // 🔹 지역 데이터 생성 (province / city 구조화)
-  const regionData = useMemo(() => rows.map(r => {
-    const parts = r.location.split(' ');
-    const province = parts[0];
-    const city = parts.slice(1).join(' ') || null; // 시 이후 전부 city로 합침
-    return { province, city };
-  }), [rows]);
+  // ── 지역 옵션 생성 (rows 기준) ──
+  const regionData = useMemo(
+    () => rows.map(r => parseLocation(r.location)),
+    [rows]
+  );
 
   const provinceOptions = useMemo(
-    () => Array.from(new Set(regionData.map(r => r.province))),
+    () => Array.from(new Set(regionData.map(r => r.province))).filter(Boolean),
     [regionData]
   );
 
   const cityOptions = useMemo(
-    () => Array.from(new Set(
-      regionData
-        .filter(r => provinceFilter ? r.province === provinceFilter : true)
-        .map(r => r.city)
-        .filter((c): c is string => Boolean(c))
-    )),
+    () =>
+      Array.from(
+        new Set(
+          regionData
+            .filter(r => !provinceFilter || r.province === provinceFilter)
+            .map(r => r.city)
+            .filter(Boolean)
+        )
+      ),
     [regionData, provinceFilter]
   );
 
-  const categoryOptions = useMemo(() => Array.from(new Set(rows.map(r => r.category))), [rows]);
-
-  const filtered = rows; // 조회 버튼 누를 때 API 호출
-
-  const sorted = useMemo(() => {
-    if (!sortKey) return filtered;
-    const data = [...filtered];
-    data.sort((a, b) => {
-      let va = '', vb = '';
-      if (sortKey === 'volunteerDate') {
-        va = a.volunteerDate; vb = b.volunteerDate;
-      } else {
-        va = a.recruitmentEndDate; vb = b.recruitmentEndDate;
-      }
-      if (va === vb) return 0;
-      return sortDir === 'asc' ? (va < vb ? -1 : 1) : (va > vb ? -1 : 1);
-    });
-    return data;
-  }, [filtered, sortKey, sortDir]);
+  const categoryOptions = useMemo(
+    () => Array.from(new Set(rows.map(r => r.category))),
+    [rows]
+  );
 
   const handleOpen = (post: ListPost) => {
     if (onRowClick) { onRowClick(post.id); return; }
@@ -125,41 +127,64 @@ export default function VolunteerTable({ rows, onRowClick, onSearch }: Volunteer
     setOpen(true);
   };
   const handleClose = () => { setOpen(false); setSelectedPost(null); };
+
   const resetFilters = () => {
     setProvinceFilter(''); setCityFilter('');
     setStatusFilter(''); setCategoryFilter('');
     setVolStart(null); setVolEnd(null);
     setVolFrom(''); setVolTo('');
   };
-  const toggleSort = (key: SortKey) => {
-    if (sortKey !== key) { setSortKey(key); setSortDir('asc'); }
-    else { setSortDir(prev => prev === 'asc' ? 'desc' : 'asc'); }
+
+  // 표시 개수 변경
+  const handleSizeSelect = (e: SelectChangeEvent<string>) => {
+    const n = parseInt(e.target.value, 10) || 20;
+    onSizeChange?.(n);
   };
 
-  const LabelRow: React.FC<{ label: string; children: React.ReactNode; stretch?: boolean; minWidth?: number }> =
-    ({ label, children, stretch = true, minWidth = 420 }) => (
-      <Stack direction="row" alignItems="center" spacing={2.5} sx={{ minWidth: { xs: '100%', md: minWidth } }}>
-        <Typography variant="body2" sx={{ width: 84, color: 'text.primary', fontWeight: 600, textAlign: 'right' }}>{label}</Typography>
-        <Box sx={{ flex: stretch ? 1 : '0 0 auto' }}>{children}</Box>
-      </Stack>
-    );
+  const LabelRow: React.FC<{
+    label: string;
+    children: React.ReactNode;
+    stretch?: boolean;
+    minWidth?: number;
+  }> = ({ label, children, stretch = true, minWidth = 420 }) => (
+    <Stack direction="row" alignItems="center" spacing={2.5} sx={{ minWidth: { xs: '100%', md: minWidth } }}>
+      <Typography variant="body2" sx={{ width: 84, color: 'text.primary', fontWeight: 600, textAlign: 'right' }}>
+        {label}
+      </Typography>
+      <Box sx={{ flex: stretch ? 1 : '0 0 auto' }}>{children}</Box>
+    </Stack>
+  );
 
   return (
     <>
-      {/* 상단 필터 */}
+      {/* ── 필터 영역 ── */}
       <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }} elevation={0}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ xs: 'stretch', md: 'center' }} useFlexGap flexWrap="wrap">
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={2}
+          alignItems={{ xs: 'stretch', md: 'center' }}
+          useFlexGap
+          flexWrap="wrap"
+        >
           <LabelRow label="봉사 지역">
             <Stack direction="row" spacing={1.25}>
+              {/* 시/도 */}
               <Autocomplete
-                size="small" sx={{ minWidth: 160 }} options={provinceOptions}
-                value={provinceFilter || null} onChange={(_, v) => { setProvinceFilter(v ?? ''); setCityFilter(''); }}
+                size="small"
+                sx={{ minWidth: 160 }}
+                options={provinceOptions}
+                value={provinceFilter || null}
+                onChange={(_, v) => { setProvinceFilter(v ?? ''); setCityFilter(''); }}
                 renderInput={(params) => <TextField {...params} placeholder="시/도" />}
                 clearOnEscape
               />
+              {/* 시·군·구 */}
               <Autocomplete
-                size="small" sx={{ minWidth: 160 }} options={cityOptions}
-                value={cityFilter || null} onChange={(_, v) => setCityFilter(v ?? '')}
+                size="small"
+                sx={{ minWidth: 160 }}
+                options={cityOptions}
+                value={cityFilter || null}
+                onChange={(_, v) => setCityFilter(v ?? '')}
                 renderInput={(params) => <TextField {...params} placeholder="시/군/구" />}
                 disabled={!provinceFilter}
                 clearOnEscape
@@ -169,11 +194,27 @@ export default function VolunteerTable({ rows, onRowClick, onSearch }: Volunteer
 
           <LabelRow label="상태" minWidth={360} stretch={false}>
             <ToggleButtonGroup
-              size="small" exclusive value={statusFilter || ''} onChange={(_, v) => setStatusFilter(v ?? '')} color="standard"
+              size="small"
+              exclusive
+              value={statusFilter || ''}
+              onChange={(_, v) => setStatusFilter(v ?? '')}
+              color="standard"
               sx={{
                 columnGap: 1.3,
-                '& .MuiToggleButton-root': { px: 1.7, textTransform: 'none', borderRadius: 999, border: '1px solid', borderColor: 'divider', color: 'text.primary', backgroundColor: '#fff' },
-                '& .MuiToggleButton-root.Mui-selected, & .MuiToggleButton-root.Mui-selected:hover': { color: '#ff7c33', borderColor: '#ff7c33', backgroundColor: '#fff' },
+                '& .MuiToggleButton-root': {
+                  px: 1.7,
+                  textTransform: 'none',
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  color: 'text.primary',
+                  backgroundColor: '#fff',
+                },
+                '& .MuiToggleButton-root.Mui-selected, & .MuiToggleButton-root.Mui-selected:hover': {
+                  color: '#ff7c33',
+                  borderColor: '#ff7c33',
+                  backgroundColor: '#fff',
+                },
               }}
             >
               <ToggleButton value="">전체</ToggleButton>
@@ -184,8 +225,14 @@ export default function VolunteerTable({ rows, onRowClick, onSearch }: Volunteer
           </LabelRow>
 
           <LabelRow label="봉사 유형" stretch={false} minWidth={260}>
-            <Autocomplete size="small" sx={{ width: 200 }} options={categoryOptions} value={categoryFilter || null}
-              onChange={(_, v) => setCategoryFilter(v ?? '')} renderInput={(params) => <TextField {...params} placeholder="유형 선택" />} clearOnEscape
+            <Autocomplete
+              size="small"
+              sx={{ width: 200 }}
+              options={categoryOptions}
+              value={categoryFilter || null}
+              onChange={(_, v) => setCategoryFilter(v ?? '')}
+              renderInput={(params) => <TextField {...params} placeholder="유형 선택" />}
+              clearOnEscape
             />
           </LabelRow>
 
@@ -193,15 +240,21 @@ export default function VolunteerTable({ rows, onRowClick, onSearch }: Volunteer
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
               <Stack direction="row" alignItems="center" sx={{ minWidth: 330 }}>
                 <DatePicker
-                  value={volStart} onChange={(v) => { setVolStart(v); setVolFrom(toISODate(v)); }}
+                  value={volStart}
+                  onChange={(v) => { setVolStart(v); setVolFrom(toISODate(v)); }}
                   format="YYYY/MM/DD"
-                  slotProps={{ textField: { size: 'small', placeholder: '시작일', sx: { minWidth: 160 } } }}
+                  slotProps={{
+                    textField: { size: 'small', placeholder: '시작일', sx: { minWidth: 160 } },
+                  }}
                 />
                 <Box sx={{ px: 1, color: 'text.secondary', userSelect: 'none' }}>~</Box>
                 <DatePicker
-                  value={volEnd} onChange={(v) => { setVolEnd(v); setVolTo(toISODate(v)); }}
+                  value={volEnd}
+                  onChange={(v) => { setVolEnd(v); setVolTo(toISODate(v)); }}
                   format="YYYY/MM/DD"
-                  slotProps={{ textField: { size: 'small', placeholder: '종료일', sx: { minWidth: 160 } } }}
+                  slotProps={{
+                    textField: { size: 'small', placeholder: '종료일', sx: { minWidth: 160 } },
+                  }}
                 />
               </Stack>
             </LocalizationProvider>
@@ -209,21 +262,45 @@ export default function VolunteerTable({ rows, onRowClick, onSearch }: Volunteer
 
           <Box sx={{ flex: 1 }} />
           <Stack direction="row" spacing={1} sx={{ ml: 'auto' }}>
-            <Button variant="text" color="inherit" startIcon={<RestartAltIcon />} onClick={resetFilters}>초기화</Button>
+            <Button variant="text" color="inherit" startIcon={<RestartAltIcon />} onClick={resetFilters}>
+              초기화
+            </Button>
             <Button
-              variant="contained" startIcon={<SearchIcon />}
-              onClick={() => onSearch?.({
-                province: provinceFilter || undefined,
-                city: cityFilter || undefined,
-                status: statusFilter || undefined,
-                category: categoryFilter || undefined,
-                volunteerFrom: volFrom || undefined,
-                volunteerTo: volTo || undefined,
-              })}
-            >조회</Button>
+              variant="contained"
+              startIcon={<SearchIcon />}
+              onClick={() =>
+                onSearch?.({
+                  province: provinceFilter || undefined, // 시/도
+                  city: cityFilter || undefined,         // 시·군·구
+                  status: statusFilter || undefined,
+                  category: categoryFilter || undefined,
+                  volunteerFrom: volFrom || undefined,
+                  volunteerTo: volTo || undefined,
+                })
+              }
+            >
+              조회
+            </Button>
           </Stack>
         </Stack>
       </Paper>
+
+      {/* 필터 아래 · 테이블 위 컨트롤 */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
+        <Typography variant="body2" color="text.secondary">
+          페이지 {page + 1}
+        </Typography>
+
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography variant="body2" color="text.secondary">표시 개수</Typography>
+          <Select size="small" value={String(size)} onChange={handleSizeSelect} sx={{ minWidth: 88 }}>
+            <MenuItem value="10">10개</MenuItem>
+            <MenuItem value="20">20개</MenuItem>
+            <MenuItem value="30">30개</MenuItem>
+            <MenuItem value="50">50개</MenuItem>
+          </Select>
+        </Stack>
+      </Stack>
 
       {/* 테이블 */}
       <TableContainer component={Paper}>
@@ -231,39 +308,38 @@ export default function VolunteerTable({ rows, onRowClick, onSearch }: Volunteer
           <TableHead sx={{ backgroundColor: '#ff7c33' }}>
             <TableRow>
               <TableCell sx={{ color: '#fff' }} align="center">제목</TableCell>
-              <TableCell sx={{ color: '#fff' }} align="center" sortDirection={sortKey === 'volunteerDate' ? sortDir : false}>
-                <TableSortLabel active={sortKey === 'volunteerDate'} direction={sortKey === 'volunteerDate' ? sortDir : 'asc'} onClick={() => toggleSort('volunteerDate')} sx={{ color: '#fff', '& .MuiTableSortLabel-icon': { color: '#fff !important' } }}>
-                  봉사 일자
-                </TableSortLabel>
-              </TableCell>
+              <TableCell sx={{ color: '#fff' }} align="center">봉사 일자</TableCell>
               <TableCell sx={{ color: '#fff' }} align="center">지역</TableCell>
               <TableCell sx={{ color: '#fff' }} align="center">봉사 유형</TableCell>
-              <TableCell sx={{ color: '#fff' }} align="center">모집 인원</TableCell>
-              <TableCell sx={{ color: '#fff' }} align="center" sortDirection={sortKey === 'recruitment' ? sortDir : false}>
-                <TableSortLabel active={sortKey === 'recruitment'} direction={sortKey === 'recruitment' ? sortDir : 'asc'} onClick={() => toggleSort('recruitment')} sx={{ color: '#fff', '& .MuiTableSortLabel-icon': { color: '#fff !important' } }}>
-                  모집 일정
-                </TableSortLabel>
-              </TableCell>
+              <TableCell sx={{ color: '#fff', whiteSpace: 'pre-line', lineHeight: 1.2 }} align="center">모집 인원</TableCell>
+              <TableCell sx={{ color: '#fff' }} align="center">모집 일정</TableCell>
               <TableCell sx={{ color: '#fff' }} align="center">상태</TableCell>
               <TableCell sx={{ color: '#fff' }} align="center">상세보기</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {sorted.map(post => (
+            {rows.map((post) => (
               <TableRow key={post.id} hover>
                 <TableCell align="center">{post.title}</TableCell>
                 <TableCell align="center">{post.volunteerDate}</TableCell>
                 <TableCell align="center">{post.location}</TableCell>
                 <TableCell align="center">{post.category}</TableCell>
-                <TableCell align="center">{post.totalCapacity}</TableCell>
-                <TableCell align="center">{post.recruitmentStartDate} ~ {post.recruitmentEndDate}</TableCell>
+                <TableCell align="center">
+                  {(post as any).appliedCount != null
+                    ? `${(post as any).appliedCount} / ${(post as any).capacity ?? (post as any).totalCapacity}`
+                    : (post as any).totalCapacity}
+                </TableCell>
+                <TableCell align="center">
+                  {post.recruitmentStartDate} ~ {post.recruitmentEndDate}
+                </TableCell>
                 <TableCell align="center">{post.status}</TableCell>
                 <TableCell align="center">
                   <Button variant="outlined" onClick={() => handleOpen(post)}>상세 보기</Button>
                 </TableCell>
               </TableRow>
             ))}
-            {sorted.length === 0 && (
+            {rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                   조건에 해당하는 게시글이 없습니다.
@@ -274,7 +350,10 @@ export default function VolunteerTable({ rows, onRowClick, onSearch }: Volunteer
         </Table>
       </TableContainer>
 
-      {!onRowClick && selectedPost && <VolunteerDetailModal open={open} onClose={handleClose} data={selectedPost} />}
+      {/* 내부 모달 (외부 onRowClick 미사용 시에만) */}
+      {!onRowClick && selectedPost && (
+        <VolunteerDetailModal open={open} onClose={handleClose} data={selectedPost} />
+      )}
     </>
   );
 }

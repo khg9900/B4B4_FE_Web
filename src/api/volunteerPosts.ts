@@ -1,16 +1,17 @@
+// src/api/volunteerPosts.ts
 import { api } from './http';
-import { toPageFromMy, toDetail, toUpdateRequest } from '../adapters/volunteer';
+import { toSliceFromMy, toDetail, toUpdateRequest } from '../adapters/volunteer';
 import type {
   DetailPost,
   CreatePostRequest,
   MyPostQuery,
-  TeamStatus
+  TeamStatus,
 } from '../types/volunteer';
 
-/** 내 글 목록 조회 */
+/** 내 글 목록 조회 (Slice) */
 export async function fetchMyPosts(params: MyPostQuery = {}) {
   const res = await api.get('/post/my', { params });
-  return toPageFromMy(res.data);
+  return toSliceFromMy(res.data); // { content, page, size, hasNext }
 }
 
 /** 상세 조회 */
@@ -26,10 +27,16 @@ export async function createVolunteerPost(payload: CreatePostRequest) {
   return res.status;
 }
 
-/** 게시글 수정 (PATCH /post/{id}) — DetailPost(KO) → UpdatePostRequest(EN) 내부 변환 */
+/** 게시글 수정 (PATCH /post/{id}) — Detail(KO) → Update(EN) */
 export async function updateVolunteerPost(id: number, form: DetailPost) {
   const body = toUpdateRequest(form);
   await api.patch(`/post/${id}`, body);
+}
+
+
+/** 게시글 삭제 (DELETE /post/{id}) */
+export async function deleteVolunteerPost(id: number) {
+  await api.delete(`/post/${id}`);
 }
 
 /** 팀 현황 조회 (GET /post/{postId}/teams) */
@@ -37,6 +44,7 @@ export async function fetchPostTeams(postId: number): Promise<TeamStatus[]> {
   const res = await api.get(`/post/${postId}/teams`);
   const payload = res.data?.payload ?? res.data;
   const teams = Array.isArray(payload?.teams) ? payload.teams : [];
+
   // 정렬(팀 번호 오름차순) 및 안전 매핑
   return teams
     .map((t: any) => ({
@@ -47,6 +55,7 @@ export async function fetchPostTeams(postId: number): Promise<TeamStatus[]> {
     }))
     .sort((a: TeamStatus, b: TeamStatus) => a.teamNumber - b.teamNumber);
 }
+
 /* ====== 추가 코드 (신규 API 및 타입) ====== */
 
 export type CheckinStatus =

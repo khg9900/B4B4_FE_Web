@@ -45,8 +45,9 @@ export default function VolunteerForm({
   const [province, setProvince] = useState('');
   const [city, setCity] = useState<string | null>(''); // city null 처리 가능
   const [placeName, setPlaceName] = useState('');
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
+
+  const [latitude, setLatitude] = useState<string>('');
+  const [longitude, setLongitude] = useState<string>('');
 
   const [locationModalOpen, setLocationModalOpen] = useState(false);
 
@@ -93,7 +94,8 @@ export default function VolunteerForm({
   const isValid = allRequiredFilled && divisible;
 
   const toHHmmss = (t: string) => (t && /^\d{2}:\d{2}$/.test(t) ? `${t}:00` : t || '00:00:00');
-  const toIsoDateTime = (date: string, hhmm: string) => `${date}T${hhmm && hhmm.length === 5 ? hhmm : '00:00'}:00`;
+  const toIsoDateTime = (date: string, hhmm: string) =>
+     `${date}T${hhmm && hhmm.length === 5 ? hhmm : '00:00'}:00`;
 
   const handleSubmit = async () => {
     setErrorMsg('');
@@ -111,9 +113,16 @@ export default function VolunteerForm({
         volunteerStartTime: toHHmmss(volunteerStartTime),
         volunteerEndTime: toHHmmss(volunteerEndTime),
         recruitmentStartDate, recruitmentEndDate,
-        totalCapacity: totalCapacity as number, teamSize: perTeam,
+        totalCapacity: totalCapacity as number,
+        teamSize: perTeam,
         category: CAT_KO_TO_EN[category],
-        location: { province, city: city || '', placeName: placeName || '', latitude: latNum, longitude: lngNum },
+        location: { 
+          province,
+          city: city || '',
+          placeName: placeName || '',
+          latitude: latNum,
+          longitude: lngNum 
+        },
         attendancePolicy: {
           checkinStart: toIsoDateTime(volunteerDate, attendanceStartTime),
           checkinEnd: toIsoDateTime(volunteerDate, attendanceEndTime),
@@ -137,16 +146,25 @@ export default function VolunteerForm({
 
         {/* 제목/카테고리 */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField fullWidth label="제목" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <TextField
+            fullWidth
+            label="제목"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
           <FormControl fullWidth>
             <InputLabel id="cat-label">카테고리</InputLabel>
             <Select<PostCategory>
               labelId="cat-label"
               label="카테고리"
               value={category}
-              onChange={(e: SelectChangeEvent<PostCategory>) => setCategory(e.target.value as PostCategory)}
+              onChange={(e: SelectChangeEvent<PostCategory>) =>
+                setCategory(e.target.value as PostCategory)
+              }
             >
-              {POST_CATEGORIES.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+              {POST_CATEGORIES.map((c) => (
+                <MenuItem key={c} value={c}>{c}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Stack>
@@ -162,19 +180,55 @@ export default function VolunteerForm({
           placeholder="봉사 내용, 준비물, 유의사항 등을 입력하세요."
         />
 
-        {/* 일정 */}
+        {/* 봉사 일자 / 시작·종료 */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField fullWidth type="date" label="봉사 일자" value={volunteerDate} onChange={(e) => setVolunteerDate(e.target.value)} InputLabelProps={{ shrink: true }} />
-          <TextField fullWidth type="time" label="시작 시간" value={volunteerStartTime} onChange={(e) => setVolunteerStartTime(e.target.value)} InputLabelProps={{ shrink: true }} />
-          <TextField fullWidth type="time" label="종료 시간" value={volunteerEndTime} onChange={(e) => setVolunteerEndTime(e.target.value)} InputLabelProps={{ shrink: true }} />
+          <TextField
+            fullWidth
+            type="date"
+            label="봉사 일자"
+            value={volunteerDate}
+            onChange={(e) => setVolunteerDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            type="time"
+            label="시작 시간"
+            value={volunteerStartTime}
+            onChange={(e) => setVolunteerStartTime(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            type="time"
+            label="종료 시간"
+            value={volunteerEndTime}
+            onChange={(e) => setVolunteerEndTime(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
         </Stack>
 
         {/* 모집 기간 */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField fullWidth type="date" label="모집 시작" value={recruitmentStartDate} onChange={(e) => setRecruitmentStartDate(e.target.value)} InputLabelProps={{ shrink: true }} />
-          <TextField fullWidth type="date" label="모집 마감" value={recruitmentEndDate} onChange={(e) => setRecruitmentEndDate(e.target.value)} InputLabelProps={{ shrink: true }} />
-        </Stack>
 
+          <TextField
+            fullWidth
+            type="date"
+            label="모집 시작"
+            value={recruitmentStartDate}
+            onChange={(e) => setRecruitmentStartDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            type="date"
+            label="모집 마감"
+            value={recruitmentEndDate}
+            onChange={(e) => setRecruitmentEndDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Stack>
+          
         {/* 위치 선택 */}
         <Button variant="outlined" onClick={() => setLocationModalOpen(true)}>위치 선택</Button>
 
@@ -211,30 +265,77 @@ export default function VolunteerForm({
           </Stack>
         </Box>
 
-        {/* 인원/팀 */}
+        {/* 인원/팀 (팀 개수 설정 → 팀당 정원 자동 계산) */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField fullWidth type="number" inputProps={{ min: 1 }} label="총 인원" value={totalCapacity} onChange={(e) => setTotalCapacity(e.target.value === '' ? '' : Number(e.target.value))} />
-          <TextField fullWidth type="number" inputProps={{ min: 1 }} label="팀 개수" value={teamCount} onChange={(e) => setTeamCount(e.target.value === '' ? '' : Number(e.target.value))}
-            helperText={typeof totalCapacity === 'number' && typeof teamCount === 'number' && teamCount > 0
-              ? (divisible ? `팀당 정원 자동 계산: ${perTeam}명` : '총 인원이 팀 개수로 나누어떨어지지 않습니다.')
-              : '팀 개수를 입력하면 팀당 정원이 자동 계산됩니다.'}
-            error={Boolean(totalCapacity) && Boolean(teamCount) && !divisible} />
+          <TextField
+            fullWidth
+            type="number"
+            inputProps={{ min: 1 }}
+            label="총 인원"
+            value={totalCapacity}
+            onChange={(e) => setTotalCapacity(e.target.value === '' ? '' : Number(e.target.value))}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            inputProps={{ min: 1 }}
+            label="팀 개수"
+            value={teamCount}
+            onChange={(e) => setTeamCount(e.target.value === '' ? '' : Number(e.target.value))}
+            helperText={
+              typeof totalCapacity === 'number' && typeof teamCount === 'number' && teamCount > 0
+                ? (divisible
+                    ? `팀당 정원 자동 계산: ${perTeam}명`
+                    : '총 인원이 팀 개수로 나누어떨어지지 않습니다.')
+                : '팀 개수를 입력하면 팀당 정원이 자동 계산됩니다.'
+            }
+            error={Boolean(totalCapacity) && Boolean(teamCount) && !divisible}
+          />
         </Stack>
 
         {/* 출석 정책 */}
-        <Typography variant="h6" sx={{ mt: 1 }}>출석 정책</Typography>
+        <Typography variant="h6" sx={{ mt: 1 }}>
+          출석 정책
+        </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField fullWidth type="time" label="출석 시작 시간" value={attendanceStartTime} onChange={(e) => setAttendanceStartTime(e.target.value)} InputLabelProps={{ shrink: true }} />
-          <TextField fullWidth type="time" label="출석 종료 시간" value={attendanceEndTime} onChange={(e) => setAttendanceEndTime(e.target.value)} InputLabelProps={{ shrink: true }} />
-          <TextField fullWidth type="number" inputProps={{ min: 100 }} label="출석 인정 반경" value={attendanceRadius} onChange={(e) => setAttendanceRadius(e.target.value === '' ? '' : Number(e.target.value))}
+          <TextField
+            fullWidth
+            type="time"
+            label="출석 시작 시간"
+            value={attendanceStartTime}
+            onChange={(e) => setAttendanceStartTime(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            type="time"
+            label="출석 종료 시간"
+            value={attendanceEndTime}
+            onChange={(e) => setAttendanceEndTime(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            inputProps={{ min: 100 }} // ⬅️ 최소 100
+            label="출석 인정 반경"
+            value={attendanceRadius}
+            onChange={(e) => setAttendanceRadius(e.target.value === '' ? '' : Number(e.target.value))}
             InputProps={{ endAdornment: <InputAdornment position="end">m</InputAdornment> }}
-            helperText="최소 100m 이상" error={typeof attendanceRadius === 'number' && attendanceRadius < 100} />
+            helperText="최소 100m 이상"
+            error={typeof attendanceRadius === 'number' && attendanceRadius < 100}
+          />
         </Stack>
 
         {showButtons && (
           <Stack direction="row" spacing={1.5} justifyContent="flex-end">
             <Button onClick={onCancel} color="inherit">취소</Button>
-            <Button variant="contained" onClick={handleSubmit} disabled={!isValid || submitting} sx={{ bgcolor: '#ff7c33', ':hover': { bgcolor: '#ff6a14' } }}>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={!isValid || submitting}
+              sx={{ bgcolor: '#ff7c33', ':hover': { bgcolor: '#ff6a14' } }}
+            >
               {submitLabel}
             </Button>
           </Stack>

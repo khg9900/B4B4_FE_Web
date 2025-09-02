@@ -1,42 +1,51 @@
+// src/pages/VolunteerPosts.tsx
 import { useEffect, useState, useCallback } from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Typography, Stack } from '@mui/material';
 import Topbar from '../components/Topbar';
 import VolunteerTable from '../components/VolunteerTable';
 import VolunteerDetailModal from '../components/VolunteerDetailModal';
 import VolunteerCreateModal from '../components/VolunteerCreateModal';
-
-import { fetchMyPosts, fetchPostDetail, updateVolunteerPost } from '../api/volunteerPosts';
+import {fetchMyPosts, fetchPostDetail, updateVolunteerPost, deleteVolunteerPost, } from '../api/volunteerPosts';
 import { toListPostFromMy } from '../adapters/volunteer';
 import type { ListPost, DetailPost, MyPostQuery, PostStatusEN, PostCategoryEN } from '../types/volunteer';
 
-// UI(KO) → 서버(EN) 매핑 (검색용)
-const STATUS_KO_TO_EN: Record<string, PostStatusEN> = {
+const STATUS_KO_TO_EN: Record<'모집 중' | '모집 마감' | '봉사 완료', PostStatusEN> = {
   '모집 중': 'OPEN',
   '모집 마감': 'CLOSED',
   '봉사 완료': 'COMPLETED',
 };
-const CATEGORY_KO_TO_EN: Record<string, PostCategoryEN> = {
+
+const CATEGORY_KO_TO_EN: Record<'봉사활동 모집' | '구호물품 지원', PostCategoryEN> = {
   '봉사활동 모집': 'RECRUITMENT',
   '구호물품 지원': 'SUPPORT',
 };
 
+const toStatusEN = (ko?: string): PostStatusEN | undefined =>
+  ko ? STATUS_KO_TO_EN[ko as keyof typeof STATUS_KO_TO_EN] : undefined;
+
+const toCategoryEN = (ko?: string): PostCategoryEN | undefined =>
+  ko ? CATEGORY_KO_TO_EN[ko as keyof typeof CATEGORY_KO_TO_EN] : undefined;
+
 export default function Post() {
   const [rows, setRows] = useState<ListPost[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const [query, setQuery] = useState<MyPostQuery>({ page: 0, size: 20 });
-
+  const [query, setQuery] = useState<MyPostQuery>({ page: 0, size: 10 });
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+  const [hasNext, setHasNext] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detail, setDetail] = useState<DetailPost | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-
   const [createOpen, setCreateOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const page = await fetchMyPosts(query);
-      setRows(page.content.map(toListPostFromMy));
+      const slice = await fetchMyPosts(query); // { content, page, size, hasNext }
+      setRows(slice.content.map(toListPostFromMy));
+      setPage(slice.page);
+      setSize(slice.size);
+      setHasNext(slice.hasNext);
     } catch (e) {
       console.error(e);
       alert('목록 조회 실패');
@@ -49,6 +58,15 @@ export default function Post() {
     void load();
   }, [load]);
 
+  // 페이지가 확정되면 상단으로 스크롤
+  useEffect(() => {
+    if (loading) return;
+    const pane = document.getElementById('page-scroll');
+    pane?.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [page, loading]);
+
+  // 검색 → 0페이지로 리셋
   const handleSearch = useCallback((filters: {
     province?: string;
     city?: string;
@@ -57,26 +75,25 @@ export default function Post() {
     volunteerFrom?: string;
     volunteerTo?: string;
   }) => {
-    const statusEN = filters.status ? STATUS_KO_TO_EN[filters.status] : undefined;
-    const categoryEN = filters.category ? CATEGORY_KO_TO_EN[filters.category] : undefined;
-
-    setQuery({
-      ...query,
+    const next: MyPostQuery = {
       page: 0,
+      size: query.size ?? size,
       province: filters.province || undefined,
       city: filters.city || undefined,
-      status: statusEN,
-      category: categoryEN,
+      status: toStatusEN(filters.status),        
+      category: toCategoryEN(filters.category),  
       volunteerStartDate: filters.volunteerFrom || undefined,
       volunteerEndDate: filters.volunteerTo || undefined,
-    });
-  }, [query]);
+    };
+
+    setQuery(next);
+  }, [query.size, size]);
 
   const handleRowClick = useCallback(async (id: number) => {
     setDetailLoading(true);
     try {
       const d = await fetchPostDetail(id);
-      setDetail({ ...d, id }); // ✅ 서버가 id를 안 줘도 경로 파라미터용으로 보장
+      setDetail({ ...d, id });
       setDetailOpen(true);
     } catch (e) {
       console.error(e);
@@ -97,8 +114,16 @@ export default function Post() {
         return;
       }
     }
-    await updateVolunteerPost(next.id, next); // ✅ 변환은 API에서 수행
+
+    await updateVolunteerPost(next.id, next);
     await load();
+  }, [load]);
+
+  // ✅ 삭제 후 목록 새로고침 + 모달 닫기
+  const handleDeleteDetail = useCallback(async (id: number) => {
+    await deleteVolunteerPost(id);
+    await load();
+    setDetailOpen(false);
   }, [load]);
 
   const handleCreated = useCallback(() => {
@@ -106,28 +131,45 @@ export default function Post() {
     void load();
   }, [load]);
 
+  // 페이지 이동
+  const goPrev = () => setQuery(q => ({ ...q, page: Math.max(0, (q.page ?? 0) - 1) }));
+  const goNext = () => { if (hasNext) setQuery(q => ({ ...q, page: (q.page ?? 0) + 1 })); };
+
+  // 표시 개수 변경 (10/20/30/50)
+  const handlePageSizeChange = (newSize: number) => {
+    setSize(newSize);
+    setQuery(q => ({ ...q, page: 0, size: newSize }));
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Topbar />
-      <Box sx={{ flexGrow: 1, p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      {/* 스크롤 기준 컨테이너 */}
+      <Box id="page-scroll" sx={{ flexGrow: 1, p: 3 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h5">봉사활동 게시글 관리</Typography>
-          <Button variant="contained" onClick={() => setCreateOpen(true)}>
-            + 게시글 등록
-          </Button>
-        </Box>
+          <Button variant="contained" onClick={() => setCreateOpen(true)}>+ 게시글 등록</Button>
+        </Stack>
 
+        {/* 필터 + 상단 페이지 표시/크기 선택은 VolunteerTable에서 렌더 */}
         <VolunteerTable
           rows={rows}
           onRowClick={handleRowClick}
           onSearch={handleSearch}
+          page={page}
+          size={size}
+          onSizeChange={handlePageSizeChange}
         />
 
-        {loading && (
-          <Typography sx={{ mt: 1, color: 'text.secondary' }}>
-            로딩 중…
-          </Typography>
-        )}
+        {/* 하단: 이전/다음만 중앙 정렬 */}
+        <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
+          <Button variant="outlined" onClick={goPrev} disabled={loading || page === 0} sx={{ mr: 1 }}>
+            이전
+          </Button>
+          <Button variant="contained" onClick={goNext} disabled={loading || !hasNext}>
+            다음
+          </Button>
+        </Stack>
       </Box>
 
       {detailOpen && detail && (
@@ -136,6 +178,7 @@ export default function Post() {
           onClose={() => setDetailOpen(false)}
           data={detail}
           onSave={handleSaveDetail}
+          onDelete={handleDeleteDetail}
         />
       )}
 
