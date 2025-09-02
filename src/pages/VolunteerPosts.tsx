@@ -1,18 +1,11 @@
 // src/pages/VolunteerPosts.tsx
 import { useEffect, useState, useCallback } from 'react';
 import { Box, Button, Typography, Stack } from '@mui/material';
-
 import Topbar from '../components/Topbar';
 import VolunteerTable from '../components/VolunteerTable';
 import VolunteerDetailModal from '../components/VolunteerDetailModal';
 import VolunteerCreateModal from '../components/VolunteerCreateModal';
-
-import {
-  fetchMyPosts,
-  fetchPostDetail,
-  updateVolunteerPost,
-  deleteVolunteerPost,
-} from '../api/volunteerPosts';
+import {fetchMyPosts, fetchPostDetail, updateVolunteerPost, deleteVolunteerPost, } from '../api/volunteerPosts';
 import { toListPostFromMy } from '../adapters/volunteer';
 import type { ListPost, DetailPost, MyPostQuery, PostStatusEN, PostCategoryEN } from '../types/volunteer';
 
@@ -36,13 +29,10 @@ const toCategoryEN = (ko?: string): PostCategoryEN | undefined =>
 export default function Post() {
   const [rows, setRows] = useState<ListPost[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // Slice 페이지네이션 상태
-  const [query, setQuery] = useState<MyPostQuery>({ page: 0, size: 20 });
+  const [query, setQuery] = useState<MyPostQuery>({ page: 0, size: 10 });
   const [page, setPage] = useState(0);
-  const [size, setSize] = useState(20);
+  const [size, setSize] = useState(10);
   const [hasNext, setHasNext] = useState(false);
-
   const [detailOpen, setDetailOpen] = useState(false);
   const [detail, setDetail] = useState<DetailPost | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -113,7 +103,6 @@ export default function Post() {
     }
   }, []);
 
-  // 저장 후 목록 새로고침
   const handleSaveDetail = useCallback(async (next: DetailPost) => {
     if (next.id == null) {
       alert('게시글 ID가 없습니다.');
@@ -125,6 +114,7 @@ export default function Post() {
         return;
       }
     }
+
     await updateVolunteerPost(next.id, next);
     await load();
   }, [load]);

@@ -9,7 +9,7 @@ import { NavLink } from 'react-router-dom';
 import LogoImage from '../assets/logo.png';
 
 const menuItems = [
-  { text: '홈',       icon: <HomeIcon />,            path: '/dashboard/home' },
+  { text: '홈',       icon: <HomeIcon />,            path: '/home' },
   { text: '신고 목록', icon: <SpaceDashboardIcon />, path: '/dashboard' },
   { text: '지도 보기', icon: <PlaceIcon />,          path: '/map' },
 ];
@@ -39,7 +39,6 @@ export default function Sidebar() {
             key={item.text}
             component={NavLink}
             to={item.path}
-            // '/dashboard'만 end 주면 /dashboard/home에서 함께 활성화되는 걸 방지
             end={item.path === '/dashboard'}
             sx={{
               borderRadius: 1,

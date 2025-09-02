@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import DisasterHomePage from './pages/DisasterHomePage';
+import MapPage from './pages/MapPage';
 import Post from './pages/VolunteerPosts';
 import NotFound from './pages/NotFound';
 import Forbidden from './pages/Forbidden';
@@ -29,7 +30,7 @@ function RootRedirect() {
   const at = getAccessToken();
   if (!at) return <Navigate to="/login" replace />;
   const role = getCurrentRole();
-  if (role === 'GOV') return <Navigate to="/dashboard" replace />; // 기본은 목록으로 유지
+  if (role === 'GOV') return <Navigate to="/dashboard" replace />; // 기본은 신고 목록
   if (role === 'NGO') return <Navigate to="/posts" replace />;
   return <Navigate to="/login" replace />;
 }
@@ -44,7 +45,7 @@ function AppRoutes() {
 
         {/* GOV 전용 */}
         <Route
-          path="/dashboard/home"
+          path="/home"
           element={
             <RequireRole allow={['GOV']}>
               <DisasterHomePage />
@@ -56,6 +57,14 @@ function AppRoutes() {
           element={
             <RequireRole allow={['GOV']}>
               <Dashboard />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/map"
+          element={
+            <RequireRole allow={['GOV']}>
+              <MapPage />
             </RequireRole>
           }
         />

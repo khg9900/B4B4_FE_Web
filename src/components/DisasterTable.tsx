@@ -53,7 +53,7 @@ export default function DisasterTable() {
     si: '',
     gu: '',
     page: 0,
-    size: 20,
+    size: 10,
   });
 
   // 데이터/플래그

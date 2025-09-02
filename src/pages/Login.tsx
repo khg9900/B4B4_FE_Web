@@ -1,4 +1,5 @@
 // src/pages/Login.tsx
+
 import React, { useEffect, useState } from 'react';
 import {
   Box, Paper, Typography, TextField, Button, Checkbox, FormControlLabel,
@@ -101,7 +102,16 @@ export default function Login() {
         alignItems: 'center',
       }}
     >
-      <Paper elevation={3} sx={{ p: 5, borderRadius: 3, width: '100%', maxWidth: 420, backgroundColor: '#fff' }}>
+      <Paper
+        elevation={3}
+        sx={{
+          p: 5,
+          borderRadius: 3,
+          width: '100%',
+          maxWidth: 420,
+          backgroundColor: '#fff',
+        }}
+      >
         <Box textAlign="center" mb={4}>
           <img src={logo} alt="로고" style={{ height: 110, marginBottom: '2.5rem' }} />
         </Box>
@@ -141,7 +151,11 @@ export default function Login() {
               <Checkbox
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                sx={{ color: '#ff7c33', '&.Mui-checked': { color: '#ff7c33' }, p: '5px' }}
+                sx={{
+                  color: '#ff7c33',
+                  '&.Mui-checked': { color: '#ff7c33' },
+                  p: '5px',
+                }}
               />
             }
             label={<Typography variant="body2" sx={{ fontSize: '14px' }}>아이디 저장하기</Typography>}

@@ -33,6 +33,7 @@ export async function updateVolunteerPost(id: number, form: DetailPost) {
   await api.patch(`/post/${id}`, body);
 }
 
+
 /** 게시글 삭제 (DELETE /post/{id}) */
 export async function deleteVolunteerPost(id: number) {
   await api.delete(`/post/${id}`);
@@ -43,6 +44,8 @@ export async function fetchPostTeams(postId: number): Promise<TeamStatus[]> {
   const res = await api.get(`/post/${postId}/teams`);
   const payload = res.data?.payload ?? res.data;
   const teams = Array.isArray(payload?.teams) ? payload.teams : [];
+
+  // 정렬(팀 번호 오름차순) 및 안전 매핑
   return teams
     .map((t: any) => ({
       teamId: Number(t.teamId),
@@ -51,4 +54,67 @@ export async function fetchPostTeams(postId: number): Promise<TeamStatus[]> {
       currentCount: Number(t.currentCount),
     }))
     .sort((a: TeamStatus, b: TeamStatus) => a.teamNumber - b.teamNumber);
+}
+
+/* ====== 추가 코드 (신규 API 및 타입) ====== */
+
+export type CheckinStatus =
+  | 'PARTICIPATED'
+  | 'CANCELLED'
+  | 'BLACKLISTED'
+  | 'PRESENT'
+  | 'ABSENT';
+
+export type Participant = {
+  participantId: number;
+  name: string;
+  email: string;
+  phone: string;
+  status: CheckinStatus; // PRESENT | ABSENT | ...
+};
+
+export type TeamParticipantsResponse = {
+  teamId: number;
+  teamNumber: number;
+  participants: Participant[];
+};
+
+export type CheckinStatusRequest = {
+  status: Extract<CheckinStatus, 'PRESENT' | 'ABSENT'>;
+};
+
+// 공통 언랩 유틸
+function unwrap<T>(res: any): T {
+  return res?.data?.payload ?? res?.data?.data ?? res?.data ?? res;
+}
+
+/**
+ * 특정 팀 참여자 리스트 조회
+ * GET /posts/{postId}/teams/{teamId}
+ * 백엔드: VolunteerAttendanceController.getTeamList
+ */
+export async function fetchTeamParticipants(
+  postId: number,
+  teamId: number
+): Promise<TeamParticipantsResponse> {
+  const res = await api.get(`/posts/${postId}/teams/${teamId}`);
+  return unwrap<TeamParticipantsResponse>(res);
+}
+
+/**
+ * 결석 처리된 참여자 출석 상태 변경
+ * PATCH /posts/{postId}/teams/{teamId}/volunteer-participants/{participantId}
+ * body: { status: 'PRESENT' | 'ABSENT' }
+ * 백엔드: VolunteerAttendanceController.patchAttendance
+ */
+export async function updateParticipantAttendance(
+  postId: number,
+  teamId: number,
+  participantId: number,
+  body: CheckinStatusRequest
+): Promise<void> {
+  await api.patch(
+    `/posts/${postId}/teams/${teamId}/volunteer-participants/${participantId}`,
+    body
+  );
 }

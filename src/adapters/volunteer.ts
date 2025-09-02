@@ -59,10 +59,10 @@ export function toSliceFromMy<T = any>(resp: any): {
 } {
   const p = (resp && resp.payload) ?? resp ?? {};
   const content = Array.isArray(p.content) ? p.content : [];
-  const page = typeof p.number === 'number' ? p.number : 0;      // 0-based
+  const page = typeof p.number === 'number' ? p.number : 0; // 0-based
   const size = typeof p.size === 'number' ? p.size : content.length;
 
-  // Spring Slice에는 보통 last/first로만 옴. hasNext가 없다면 last로부터 유추.
+  // Spring Slice: hasNext 없으면 last로 유추
   const hasNext =
     typeof p.hasNext === 'boolean'
       ? p.hasNext

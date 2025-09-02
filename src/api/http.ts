@@ -23,7 +23,7 @@ export const api = axios.create({
   timeout: 15000,
 });
 
-/** 인증 제외 경로 */
+/** 인증 제외 경로(Authorization 헤더를 붙이면 안 되는 API) */
 const AUTH_EXCLUDE = [
   /^\/auth\/login$/,
   /^\/auth\/refresh$/,
@@ -59,6 +59,8 @@ async function reissue(): Promise<string> {
 async function ensureValidToken(): Promise<string> {
   const at = getAccessToken();
   if (!at) throw new Error('no access token');
+
+  // 만료 임박(예: 5초 이내) 시 선제 재발급
   if (!isAccessTokenExpired(5)) return at;
 
   if (isRefreshing) {
@@ -97,7 +99,7 @@ api.interceptors.request.use(async (config) => {
     config.headers = config.headers ?? {};
     (config.headers as any).Authorization = `Bearer ${validAT}`;
   } catch {
-    // ensureValidToken에서 onAuthFail 처리됨
+    // ensureValidToken 내부에서 onAuthFail 처리됨
   }
   return config;
 });
@@ -109,7 +111,7 @@ api.interceptors.response.use(
     const status = err.response?.status;
     const original: any = err.config;
 
-    if (!original || isAuthExcluded(original.url)) {
+    if (!original || isAuthExcluded(original?.url)) {
       return Promise.reject(err);
     }
 

@@ -1,15 +1,18 @@
-import React from 'react';
+// src/components/VolunteerDetailModal.tsx
+import React, { useEffect, useRef, useState } from 'react';
 import {
   TextField, Typography, Button, Select, MenuItem,
   InputLabel, FormControl, Stack, Box, InputAdornment, CircularProgress,
   Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  Checkbox, FormControlLabel,
+  Checkbox, FormControlLabel, Collapse, IconButton, Divider
 } from '@mui/material';
+import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
 import type { SelectChangeEvent } from '@mui/material';
 import AppDialog from './AppDialog';
 import type { DetailPost, PostStatus, TeamStatus } from '../types/volunteer';
-import { fetchPostTeams } from '../api/volunteerPosts';
+import { fetchPostTeams, fetchTeamParticipants, updateParticipantAttendance } from '../api/volunteerPosts';
+import { loadKakaoMap } from '../utils/kakaoLoader';
 
 type Props = {
   open: boolean;
@@ -17,6 +20,14 @@ type Props = {
   data: DetailPost;
   onSave?: (next: DetailPost) => Promise<void>;
   onDelete?: (id: number) => Promise<void>;
+};
+
+type Participant = {
+  participantId: number;
+  name: string;
+  email: string;
+  phone: string;
+  status: 'PRESENT' | 'ABSENT' | 'BLACKLISTED' | 'CANCELLED' | 'PARTICIPATED';
 };
 
 export default function VolunteerDetailModal({ open, onClose, data, onSave, onDelete }: Props) {
@@ -29,10 +40,24 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
   const [confirmAgree, setConfirmAgree] = React.useState(false);
 
   // 팀 상태
-  const [teams, setTeams] = React.useState<TeamStatus[]>([]);
-  const [teamsLoading, setTeamsLoading] = React.useState(false);
+  const [teams, setTeams] = useState<TeamStatus[]>([]);
+  const [teamsLoading, setTeamsLoading] = useState(false);
+  const postId: number | null = React.useMemo(() => {
+    const v = (data as any)?.id;
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) return Number(v);
+    return null;
+  }, [data]);
 
-  const postId = data.id;
+  // 팀 아코디언 + 출석 관리 상태
+  const [expandedTeams, setExpandedTeams] = useState<Record<number, boolean>>({});
+  const [teamMembers, setTeamMembers] = useState<Record<number, Participant[]>>({});
+  const [teamLoading, setTeamLoading] = useState<Record<number, boolean>>({});
+  const [memberExpanded, setMemberExpanded] = useState<Record<number, boolean>>({});
+  const [memberSaving, setMemberSaving] = useState<Record<number, boolean>>({});
+
+  // Kakao Map
+  const mapContainer = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (open) setEdited(data);
@@ -58,10 +83,33 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
       }
     };
     void loadTeams();
+
     return () => {
       ignore = true;
     };
   }, [open, postId]);
+
+  // Kakao 지도 로드
+  useEffect(() => {
+    if (!open || !mapContainer.current) return;
+    if (!edited.latitude || !edited.longitude) return;
+
+    (async () => {
+      try {
+        const kakao = await loadKakaoMap();
+        const map = new kakao.maps.Map(mapContainer.current!, {
+          center: new kakao.maps.LatLng(edited.latitude, edited.longitude),
+          level: 3,
+        });
+        new kakao.maps.Marker({
+          map,
+          position: new kakao.maps.LatLng(edited.latitude, edited.longitude),
+        });
+      } catch (e) {
+        console.error('지도 로드 실패', e);
+      }
+    })();
+  }, [open, edited.latitude, edited.longitude]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent
@@ -111,7 +159,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     if (!onDelete || edited.id == null) return;
     try {
       setDeleting(true);
-      await onDelete(edited.id); // 부모에서 모달 닫고 목록 리프레시
+      await onDelete(edited.id);
       setConfirmOpen(false);
     } catch (e) {
       console.error(e);
@@ -121,15 +169,67 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     }
   };
 
-  // 팀 개수 / 팀당 정원 표시값
+  // 팀 개수 / 팀당 정원
   const teamCount = teams.length;
   const perTeamCapacity =
     teamCount === 0
       ? 0
       : (() => {
-          const set = new Set(teams.map((t) => t.maxCapacity));
-          return set.size === 1 ? teams[0].maxCapacity : undefined; // undefined → "팀별 상이"
-        })();
+        const set = new Set(teams.map(t => t.maxCapacity));
+        return set.size === 1 ? teams[0].maxCapacity : undefined;
+      })();
+
+  // 팀 아코디언 토글 + 팀원 로드
+  const toggleTeam = async (teamId: number) => {
+    const next = !expandedTeams[teamId];
+    setExpandedTeams(prev => ({ ...prev, [teamId]: next }));
+
+    if (!next) return;
+    if (postId == null) {
+      console.error('postId가 없습니다.');
+      return;
+    }
+
+    if (!teamMembers[teamId]) {
+      try {
+        setTeamLoading(prev => ({ ...prev, [teamId]: true }));
+        const res = await fetchTeamParticipants(postId, teamId);
+        setTeamMembers(prev => ({ ...prev, [teamId]: res.participants || [] }));
+      } catch (e) {
+        console.error('팀원 조회 실패', e);
+        setTeamMembers(prev => ({ ...prev, [teamId]: [] }));
+      } finally {
+        setTeamLoading(prev => ({ ...prev, [teamId]: false }));
+      }
+    }
+  };
+
+  // 팀원 참여/비참여 변경
+  const setAttendance = async (teamId: number, p: Participant, nextStatus: 'PRESENT' | 'ABSENT') => {
+    if (p.status === 'BLACKLISTED') {
+      alert('블랙리스트는 상태 변경이 불가합니다.');
+      return;
+    }
+    try {
+      setMemberSaving(prev => ({ ...prev, [p.participantId]: true }));
+      await updateParticipantAttendance(postId!, teamId, p.participantId, { status: nextStatus });
+      setTeamMembers(prev => {
+        const list = prev[teamId] || [];
+        const updated = list.map(m => m.participantId === p.participantId ? { ...m, status: nextStatus } : m);
+        return { ...prev, [teamId]: updated };
+      });
+    } catch (e) {
+      console.error('출석 상태 변경 실패', e);
+      alert('상태 변경에 실패했습니다.');
+    } finally {
+      setMemberSaving(prev => ({ ...prev, [p.participantId]: false }));
+    }
+  };
+
+  // 팀원 상세 아코디언
+  const toggleMember = (participantId: number) => {
+    setMemberExpanded(prev => ({ ...prev, [participantId]: !prev[participantId] }));
+  };
 
   return (
     <AppDialog
@@ -138,7 +238,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
       title="봉사활동 상세 정보"
       maxWidth="md"
       actions={
-        // 좌: 삭제(위험), 우: 닫기/저장(안전)
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
           <Button
             onClick={openDeleteConfirm}
@@ -269,10 +368,12 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
           value={edited.placeName ?? ''}
           onChange={handleChange}
         />
-
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           좌표: 위도 {edited.latitude ?? '-'}, 경도 {edited.longitude ?? '-'}
         </Typography>
+
+        {/* Kakao 지도 */}
+        <Box ref={mapContainer} sx={{ width: '100%', height: 400, border: '1px solid #ddd', borderRadius: 1 }} />
 
         {/* 출석 정책 */}
         <Typography variant="h6" sx={{ mt: 1 }}>
@@ -342,44 +443,135 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
         <Typography variant="subtitle1" sx={{ mt: 1, mb: 1 }}>
           팀별 인원 현황
         </Typography>
-
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow sx={{ height: 44 }}>
-                <TableCell sx={{ fontWeight: 'bold' }}>팀 이름</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                  인원 (신청/정원)
-                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>No</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'bold' }}>인원 (신청/정원)</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold', width: 96 }}>팀원</TableCell>
               </TableRow>
-            </TableHead>
+            </TableHead >
             <TableBody>
-              {teamsLoading && (
-                <TableRow>
-                  <TableCell colSpan={2}>팀 정보 로딩 중…</TableCell>
-                </TableRow>
-              )}
-              {!teamsLoading && teams.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={2}>팀 정보가 없습니다.</TableCell>
-                </TableRow>
-              )}
-              {!teamsLoading &&
-                teams.map((t) => (
-                  <TableRow key={t.teamId} sx={{ height: 44 }}>
-                    <TableCell>{`팀 ${t.teamNumber}`}</TableCell>
-                    <TableCell align="right">
-                      {t.currentCount} / {t.maxCapacity}명
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {teamsLoading && <TableRow><TableCell colSpan={3}>팀 정보 로딩 중…</TableCell></TableRow>}
+              {!teamsLoading && teams.length === 0 && <TableRow><TableCell colSpan={3}>팀 정보가 없습니다.</TableCell></TableRow>}
+              {!teamsLoading && teams.map(t => {
+                const isOpen = !!expandedTeams[t.teamId];
+                return (
+                  <React.Fragment key={t.teamId}>
+                    <TableRow sx={{ height: 44 }}>
+                      <TableCell>{`${t.teamNumber}`}</TableCell>
+                      <TableCell align="right">{t.currentCount} / {t.maxCapacity}명</TableCell>
+                      <TableCell align="center">
+                        <IconButton size="small" onClick={() => toggleTeam(t.teamId)} aria-label="팀원 보기">
+                          {isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                      <TableCell colSpan={3} sx={{ p: 0, bgcolor: 'background.default' }}>
+                        <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                          <Box sx={{ p: 2 }}>
+                            {teamLoading[t.teamId] && <Typography variant="body2">팀원 로딩 중…</Typography>}
+                            {!teamLoading[t.teamId] && (
+                              <>
+                                {(!teamMembers[t.teamId] || teamMembers[t.teamId].length === 0) ? (
+                                  <Typography variant="body2">팀원이 없습니다.</Typography>
+                                ) : (
+                                  <Table size="small" aria-label="team-members">
+                                    <TableHead>
+                                      <TableRow>
+                                        <TableCell>이름</TableCell>
+                                        <TableCell>이메일</TableCell>
+                                        <TableCell>전화번호</TableCell>
+                                        <TableCell sx={{ width: 100 }}>상태</TableCell>
+                                        <TableCell align="center" sx={{ width: 180 }}>참여/비참여</TableCell>
+                                        <TableCell align="center" sx={{ width: 80 }}>상세</TableCell>
+                                      </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                      {teamMembers[t.teamId]?.map(p => {
+                                        const mOpen = !!memberExpanded[p.participantId];
+                                        const isSaving = !!memberSaving[p.participantId];
+                                        const present = p.status === 'PRESENT';
+                                        const absent = p.status === 'ABSENT';
+                                        const blacklisted = p.status === 'BLACKLISTED';
+                                        return (
+                                          <React.Fragment key={p.participantId}>
+                                            <TableRow hover>
+                                              <TableCell>{p.name}</TableCell>
+                                              <TableCell>{p.email}</TableCell>
+                                              <TableCell>{p.phone}</TableCell>
+                                              <TableCell sx={{ width: 100, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {p.status}
+                                              </TableCell>
+                                              <TableCell align="center">
+                                                <Stack direction="row" spacing={1} justifyContent="center">
+                                                  <Button
+                                                    size="small"
+                                                    variant={present ? 'contained' : 'outlined'}
+                                                    disabled={isSaving || present || blacklisted}
+                                                    onClick={() => setAttendance(t.teamId, p, 'PRESENT')}
+                                                  >
+                                                    참여
+                                                  </Button>
+                                                  <Button
+                                                    size="small"
+                                                    variant={absent ? 'contained' : 'outlined'}
+                                                    disabled={isSaving || absent || blacklisted}
+                                                    onClick={() => setAttendance(t.teamId, p, 'ABSENT')}
+                                                  >
+                                                    비참여
+                                                  </Button>
+                                                </Stack>
+                                              </TableCell>
+                                              <TableCell align="center">
+                                                <IconButton size="small" onClick={() => toggleMember(p.participantId)} aria-label="상세">
+                                                  {mOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                                </IconButton>
+                                              </TableCell>
+                                            </TableRow>
+
+                                            <TableRow>
+                                              <TableCell colSpan={6} sx={{ p: 0, bgcolor: 'background.paper' }}>
+                                                <Collapse in={mOpen} timeout="auto" unmountOnExit>
+                                                  <Box sx={{ p: 2 }}>
+                                                    <Typography variant="subtitle2" sx={{ mb: 1 }}>팀원 상세 정보</Typography>
+                                                    <Divider sx={{ mb: 1 }} />
+                                                    <Stack spacing={0.5}>
+                                                      <Typography variant="body2">이름: {p.name}</Typography>
+                                                      <Typography variant="body2">이메일: {p.email}</Typography>
+                                                      <Typography variant="body2">전화번호: {p.phone}</Typography>
+                                                      <Typography variant="body2">상태: {p.status}</Typography>
+                                                    </Stack>
+                                                  </Box>
+                                                </Collapse>
+                                              </TableCell>
+                                            </TableRow>
+                                          </React.Fragment>
+                                        );
+                                      })}
+                                    </TableBody>
+                                  </Table>
+                                )}
+                              </>
+                            )}
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
+                );
+              })}
             </TableBody>
-          </Table>
-        </TableContainer>
-      </Stack>
+          </Table >
+        </TableContainer >
+      </Stack >
 
       {/* 삭제 확인 다이얼로그 */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+      < Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)
+      }>
         <DialogTitle>게시글 삭제</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -408,7 +600,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
             {deleting ? '삭제 중…' : '삭제'}
           </Button>
         </DialogActions>
-      </Dialog>
-    </AppDialog>
+      </Dialog >
+    </AppDialog >
   );
 }
