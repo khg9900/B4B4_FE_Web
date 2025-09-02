@@ -1,257 +1,221 @@
-// DisasterDetailModal.tsx
+import * as React from 'react';
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Typography,
-    Grid,
-    Button,
-    Select,
-    MenuItem,
-    Card,
-    CardContent,
-    CardMedia,
-    Box,
+  Box,
+  Grid,
+  Stack,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  CircularProgress,
+  Paper,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { useState, useEffect } from 'react';
+import AppDialog from './AppDialog';
+import type { ReportDto, ReportStatusEN } from '../types/report';
+import { DISASTER_TYPE_KO, REPORT_STATUS_KO } from '../types/report';
 
-interface Report {
-    id: number;
-    reporter: number;
-    disasterType: string;
-    description: string;
-    imageUrl?: string | null;
-    videoUrl?: string | null;
-    status: string;
-    province: string;
-    city: string;
-    locationLat: number;
-    locationLng: number;
-    createdAt: string;
-}
-
-interface Props {
-    open: boolean;
-    onClose: () => void;
-    data: Report | null;
-    onStatusChange: (id: number, newStatus: string) => void;
-}
-
-const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
-    fontSize: '1.2rem',
-    fontWeight: 'bold',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-}));
-
-const FieldBox = styled(Card)(({ theme }) => ({
-    marginBottom: theme.spacing(2),
-    borderRadius: 12,
-    boxShadow: 'none',
-    backgroundColor: '#ffffff',
-}));
-
-const Label = styled(Typography)(({ theme }) => ({
-    fontWeight: 'bold',
-    marginBottom: theme.spacing(0.5),
-}));
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  data: ReportDto;
+  onStatusChange?: (id: number, next: ReportStatusEN) => Promise<void>;
+};
 
 export default function DisasterDetailModal({ open, onClose, data, onStatusChange }: Props) {
-    const [status, setStatus] = useState<string>('');
+  const [status, setStatus] = React.useState<ReportStatusEN>(data.status);
+  const [saving, setSaving] = React.useState(false);
 
-    useEffect(() => {
-        if (data) {
-            setStatus(data.status);
-        }
-    }, [data]);
+  React.useEffect(() => {
+    if (open) setStatus(data.status);
+  }, [open, data]);
 
-    const handleSave = () => {
-        if (data) {
-            onStatusChange(data.id, status);
-        }
-        onClose();
-    };
+  const handleSave = async () => {
+    if (!onStatusChange) {
+      onClose();
+      return;
+    }
+    try {
+      setSaving(true);
+      await onStatusChange(data.id, status);
+      onClose();
+    } catch (e) {
+      console.error(e);
+      alert('상태 변경에 실패했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    if (!data) return null;
+  /** 공통: 라벨+값 한 줄 */
+  const InfoRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+    <Stack direction="row" spacing={2} alignItems="center" sx={{ minHeight: 32 }}>
+      <Typography sx={{ width: { xs: 96, sm: 120 }, fontWeight: 700, fontSize: 15 }}>
+        {label}
+      </Typography>
+      <Typography sx={{ fontSize: 15 }}>{children}</Typography>
+    </Stack>
+  );
 
-    return (
-        <Dialog open={open} onClose={onClose} maxWidth="md">
-            <StyledDialogTitle
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '16px 24px',
-                }}
-            >
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#333' }}>
-                    신고 상세 정보
+  /** 공통: 박스 섹션 */
+  const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <Paper
+      variant="outlined"
+      sx={{
+        p: 2.5,
+        borderRadius: 2,
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
+        {title}
+      </Typography>
+      {children}
+    </Paper>
+  );
+
+  return (
+    <AppDialog
+      open={open}
+      onClose={onClose}
+      title="신고 상세 정보"
+      maxWidth="md"
+      actions={
+        <>
+          <Button onClick={onClose} color="inherit" disabled={saving}>닫기</Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            disabled={saving}
+            startIcon={saving ? <CircularProgress size={18} color="inherit" /> : undefined}
+          >
+            {saving ? '저장 중…' : '저장'}
+          </Button>
+        </>
+      }
+    >
+      <Stack spacing={3}>
+        {/* 기본 정보 */}
+        <Section title="기본 정보">
+          <Grid container spacing={2.5}>
+            <Grid size={12}>
+              <InfoRow label="신고 ID">{data.id}</InfoRow>
+            </Grid>
+            <Grid size={12}>
+              <InfoRow label="신고자 ID">{data.reporterId}</InfoRow>
+            </Grid>
+            <Grid size={12}>
+              <InfoRow label="재난 유형">
+                {DISASTER_TYPE_KO[data.disasterType] ?? data.disasterType}
+              </InfoRow>
+            </Grid>
+            <Grid size={12}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+                <Typography sx={{ width: { xs: 96, sm: 120 }, fontWeight: 700, fontSize: 15 }}>
+                  접수 상태
                 </Typography>
-            </StyledDialogTitle>
+                <FormControl size="small" sx={{ minWidth: 220 }}>
+                  <InputLabel id="status-select-label">접수 상태</InputLabel>
+                  <Select<ReportStatusEN>
+                    labelId="status-select-label"
+                    label="접수 상태"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as ReportStatusEN)}
+                  >
+                    <MenuItem value="PENDING">{REPORT_STATUS_KO.PENDING}</MenuItem>
+                    <MenuItem value="RECEIVED">{REPORT_STATUS_KO.RECEIVED}</MenuItem>
+                    <MenuItem value="CLOSED">{REPORT_STATUS_KO.CLOSED}</MenuItem>
+                  </Select>
+                </FormControl>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Section>
 
-            <DialogContent dividers sx={{ pt: 3 }}>
-                <Grid container spacing={2}>
-                    <Grid size={6}>
-                        <FieldBox>
-                            <CardContent>
-                                <Label>신고 ID:</Label>
-                                <Typography>{data.id}</Typography>
-                            </CardContent>
-                        </FieldBox>
-                    </Grid>
-                    <Grid size={6}>
-                        <FieldBox>
-                            <CardContent>
-                                <Label>신고자 ID:</Label>
-                                <Typography>{data.reporter}</Typography>
-                            </CardContent>
-                        </FieldBox>
-                    </Grid>
+        {/* 신고 내용 */}
+        <Section title="신고 내용">
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2,
+              borderRadius: 1.5,
+              bgcolor: 'grey.50',
+              borderColor: 'divider',
+            }}
+          >
+            <Typography variant="body1" sx={{ lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+              {data.description || '내용 없음'}
+            </Typography>
+          </Paper>
+        </Section>
 
-                    <Grid size={6}>
-                        <FieldBox>
-                            <CardContent>
-                                <Label>재난 유형:</Label>
-                                <Typography>{data.disasterType}</Typography>
-                            </CardContent>
-                        </FieldBox>
-                    </Grid>
+        {/* 위치/좌표 */}
+        <Section title="위치 정보">
+          <Grid container spacing={2.5}>
+            <Grid size={12}>
+              <InfoRow label="지역">
+                {data.province} {data.city}
+              </InfoRow>
+            </Grid>
+            <Grid size={12}>
+              <InfoRow label="좌표">
+                위도: {Number(data.locationLat).toFixed(4)}, 경도: {Number(data.locationLng).toFixed(4)}
+              </InfoRow>
+            </Grid>
+          </Grid>
+        </Section>
 
-                    <Grid size={6}>
-                        <Label>접수 상태:</Label>
-                        <Select
-                            fullWidth
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                            sx={{
-                                backgroundColor: '#fff',
-                                borderRadius: 1,
+        {/* 첨부 */}
+        <Section title="첨부 자료">
+          {data.imageUrl ? (
+            <Box
+              component="img"
+              src={data.imageUrl}
+              alt="신고 이미지"
+              sx={{
+                width: 200,
+                height: 140,
+                objectFit: 'cover',
+                borderRadius: 1.5,
+                border: '1px solid',
+                borderColor: 'divider',
+                display: 'block',
+              }}
+            />
+          ) : (
+            <Box
+              sx={{
+                p: 2,
+                border: '1px dashed',
+                borderColor: 'divider',
+                borderRadius: 1.5,
+                color: 'text.secondary',
+                textAlign: 'center',
+              }}
+            >
+              첨부 없음
+            </Box>
+          )}
+        </Section>
 
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: '#ff7c33', // 기본 테두리
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: '#ff7c33', // 호버 시
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: '#ff7c33', // 포커스 시
-                                },
-                                '& .MuiSelect-icon': {
-                                    color: '#ff7c33', // 드롭다운 아이콘 색상
-                                },
-                            }}
-                        >
-                            <MenuItem value="PENDING">접수대기</MenuItem>
-                            <MenuItem value="CONFIRMED">접수완료</MenuItem>
-                            <MenuItem value="CLOSED">상황종료</MenuItem>
-                        </Select>
-                    </Grid>
-
-                    <Grid size={12}>
-                        <FieldBox sx={{ backgroundColor: "#f5f5f5" }}>
-                            <CardContent>
-                                <Label>신고 내용:</Label>
-                                <Typography>{data.description}</Typography>
-                            </CardContent>
-                        </FieldBox>
-                    </Grid>
-
-                    <Grid size={6}>
-                        <FieldBox>
-                            <CardContent>
-                                <Label>지역:</Label>
-                                <Typography>{`${data.province} ${data.city}`}</Typography>
-                            </CardContent>
-                        </FieldBox>
-                    </Grid>
-
-                    <Grid size={6}>
-                        <FieldBox>
-                            <CardContent>
-                                <Label>좌표:</Label>
-                                <Typography sx={{ fontSize: '0.9rem', color: '#666' }}>
-                                    위도: {data.locationLat}, 경도: {data.locationLng}
-                                </Typography>
-                            </CardContent>
-                        </FieldBox>
-                    </Grid>
-
-                    {(data.imageUrl || data.videoUrl) && (
-                        <Grid size={12}>
-                            <FieldBox>
-                                <CardContent>
-                                    <Label>첨부 자료:</Label>
-                                    <Box display="flex" gap={2} flexWrap="wrap">
-                                        {data.imageUrl && (
-                                            <CardMedia
-                                                component="img"
-                                                image={data.imageUrl}
-                                                alt="신고 이미지"
-                                                sx={{ width: 200, borderRadius: 2 }}
-                                            />
-                                        )}
-                                        {data.videoUrl && (
-                                            <video width="240" controls style={{ borderRadius: 8 }}>
-                                                <source src={data.videoUrl} type="video/mp4" />
-                                            </video>
-                                        )}
-                                    </Box>
-                                </CardContent>
-                            </FieldBox>
-                        </Grid>
-                    )}
-
-                    <Grid size={12}>
-                        <FieldBox>
-                            <CardContent>
-                                <Label>신고 시간:</Label>
-                                <Typography>
-                                    {new Date(data.createdAt).toLocaleString('ko-KR')}
-                                </Typography>
-                            </CardContent>
-                        </FieldBox>
-                    </Grid>
-
-                </Grid>
-            </DialogContent>
-            <DialogActions sx={{ px: 3, py: 2 }}>
-                <Button
-                    onClick={onClose}
-                    variant="outlined"
-                    sx={{
-                        textTransform: 'none',
-                        borderColor: '#ff7c33',
-                        color: '#ff7c33',
-                        '&:hover': {
-                            borderColor: '#ff7c33',
-                            backgroundColor: '#fff5ec',
-                        },
-                        '&:focus': {
-                            outline: 'none',
-                            boxShadow: 'none',
-                        },
-                    }}
-                >
-                    닫기
-                </Button>
-                <Button
-                    onClick={handleSave}
-                    variant="contained"
-                    sx={{
-                        '&:focus': {
-                            outline: 'none',
-                            boxShadow: 'none',
-                        },
-                        backgroundColor: '#ff7c33',
-                        boxShadow: 'none'
-                    }}
-                >
-                    저장
-                </Button>
-            </DialogActions>
-        </Dialog>
-    );
+        {/* 시간 */}
+        <Section title="타임라인">
+          <Grid container spacing={2.5}>
+            <Grid size={12}>
+              <InfoRow label="신고 시간">
+                {new Date(data.createdAt).toLocaleString('ko-KR')}
+              </InfoRow>
+            </Grid>
+            <Grid size={12}>
+              <InfoRow label="최근 업데이트">
+                {new Date(data.updatedAt).toLocaleString('ko-KR')}
+              </InfoRow>
+            </Grid>
+          </Grid>
+        </Section>
+      </Stack>
+    </AppDialog>
+  );
 }
