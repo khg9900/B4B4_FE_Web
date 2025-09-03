@@ -4,18 +4,15 @@ import { Box, CssBaseline, Typography, Stack } from '@mui/material';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import { getMyInfoCached } from '../api/user';
+import HeatmapMap from '../components/HeatmapMap';
 
 export default function MapPage() {
   const [locationLabel, setLocationLabel] = useState<string>('내 관할');
 
-  // "2025년 9월 2일 화" 형태
   const todayLabel = useMemo(() => {
     const d = new Date();
     return d.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short',
+      year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
     });
   }, []);
 
@@ -23,13 +20,11 @@ export default function MapPage() {
     let ignore = false;
     (async () => {
       try {
-        const me = await getMyInfoCached(); // { province, city, ... }
+        const me = await getMyInfoCached();
         if (ignore) return;
         const loc = [me.province, me.city].filter(Boolean).join(' ');
         setLocationLabel(loc || '내 관할');
-      } catch {
-        // 실패 시 기본값 유지
-      }
+      } catch {}
     })();
     return () => { ignore = true; };
   }, []);
@@ -40,33 +35,16 @@ export default function MapPage() {
       <Sidebar />
       <Box component="main" sx={{ flexGrow: 1 }}>
         <Topbar />
-
-        <Box sx={{ px: 3, py: 2 }}>
-          {/* 헤더 */}
+        <Box sx={{ px:3, py:2 }}>
           <Stack spacing={0.5} sx={{ mb: 2 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800 }}>
-              오늘접수 현황
-            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800 }}>오늘접수 현황</Typography>
             <Typography variant="body2" color="text.secondary">
               {todayLabel} · {locationLabel} 기준
             </Typography>
           </Stack>
 
-          {/* 추후 지도 컴포넌트 삽입 예정인 자리 */}
-          <Box
-            sx={{
-              height: 420,
-              border: '1px dashed',
-              borderColor: 'divider',
-              borderRadius: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'text.secondary',
-            }}
-          >
-            (지도 영역 — API 연동 예정)
-          </Box>
+          {/* 지도 + 히트맵 컴포넌트 */}
+          <HeatmapMap height={420} />
         </Box>
       </Box>
     </Box>

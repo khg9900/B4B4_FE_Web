@@ -1,18 +1,26 @@
 // src/components/VolunteerDetailModal.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   TextField, Typography, Button, Select, MenuItem,
   InputLabel, FormControl, Stack, Box, InputAdornment, CircularProgress,
   Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody,
+<<<<<<< HEAD
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
   Checkbox, FormControlLabel, Collapse, IconButton, Divider
+=======
+  Collapse, IconButton, Divider, Modal
+>>>>>>> acd7da15cca99a5cb7e7d9720850dd2cb7bf6c9b
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
 import type { SelectChangeEvent } from '@mui/material';
 import AppDialog from './AppDialog';
+import LocationPicker from './LocationPicker';
 import type { DetailPost, PostStatus, TeamStatus } from '../types/volunteer';
 import { fetchPostTeams, fetchTeamParticipants, updateParticipantAttendance } from '../api/volunteerPosts';
+<<<<<<< HEAD
 import { loadKakaoMap } from '../utils/kakaoLoader';
+=======
+>>>>>>> acd7da15cca99a5cb7e7d9720850dd2cb7bf6c9b
 
 type Props = {
   open: boolean;
@@ -30,6 +38,7 @@ type Participant = {
   status: 'PRESENT' | 'ABSENT' | 'BLACKLISTED' | 'CANCELLED' | 'PARTICIPATED';
 };
 
+<<<<<<< HEAD
 export default function VolunteerDetailModal({ open, onClose, data, onSave, onDelete }: Props) {
   const [edited, setEdited] = React.useState<DetailPost>(data);
   const [saving, setSaving] = React.useState(false);
@@ -38,8 +47,21 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
   // 삭제 확인 다이얼로그
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [confirmAgree, setConfirmAgree] = React.useState(false);
+=======
+function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
+  let province = region1;
+  let city: string | null = region2;
+  if (region1.includes('세종')) city = '';
+  else if (region2.endsWith('군')) city = region2;
+  return { province, city };
+}
 
-  // 팀 상태
+export default function VolunteerDetailModal({ open, onClose, data, onSave }: Props) {
+  const [edited, setEdited] = useState<DetailPost>(data);
+  const [saving, setSaving] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+>>>>>>> acd7da15cca99a5cb7e7d9720850dd2cb7bf6c9b
+
   const [teams, setTeams] = useState<TeamStatus[]>([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
   const postId: number | null = React.useMemo(() => {
@@ -49,13 +71,13 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     return null;
   }, [data]);
 
-  // 팀 아코디언 + 출석 관리 상태
   const [expandedTeams, setExpandedTeams] = useState<Record<number, boolean>>({});
   const [teamMembers, setTeamMembers] = useState<Record<number, Participant[]>>({});
   const [teamLoading, setTeamLoading] = useState<Record<number, boolean>>({});
   const [memberExpanded, setMemberExpanded] = useState<Record<number, boolean>>({});
   const [memberSaving, setMemberSaving] = useState<Record<number, boolean>>({});
 
+<<<<<<< HEAD
   // Kakao Map
   const mapContainer = useRef<HTMLDivElement>(null);
 
@@ -65,6 +87,13 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
 
   // 모달 오픈 시 팀 정보 로드
   React.useEffect(() => {
+=======
+  useEffect(() => {
+    if (open) setEdited(data);
+  }, [open, data]);
+
+  useEffect(() => {
+>>>>>>> acd7da15cca99a5cb7e7d9720850dd2cb7bf6c9b
     let ignore = false;
     const loadTeams = async () => {
       if (!open || postId == null) {
@@ -89,28 +118,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     };
   }, [open, postId]);
 
-  // Kakao 지도 로드
-  useEffect(() => {
-    if (!open || !mapContainer.current) return;
-    if (!edited.latitude || !edited.longitude) return;
-
-    (async () => {
-      try {
-        const kakao = await loadKakaoMap();
-        const map = new kakao.maps.Map(mapContainer.current!, {
-          center: new kakao.maps.LatLng(edited.latitude, edited.longitude),
-          level: 3,
-        });
-        new kakao.maps.Marker({
-          map,
-          position: new kakao.maps.LatLng(edited.latitude, edited.longitude),
-        });
-      } catch (e) {
-        console.error('지도 로드 실패', e);
-      }
-    })();
-  }, [open, edited.latitude, edited.longitude]);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent
   ) => {
@@ -118,7 +125,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     if (!name) return;
     setEdited((prev) => ({ ...prev, [name]: value }));
   };
-
+  const { province, city } = parseRegion(edited.location?.split(' ')[0] ?? '', edited.location?.split(' ').slice(1).join(' ') ?? '');
   const requiredFilled =
     edited.title &&
     edited.content &&
@@ -127,7 +134,9 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     (edited as any).volunteerEndTime &&
     edited.recruitmentStartDate &&
     edited.recruitmentEndDate &&
-    edited.status;
+    edited.status &&
+    province &&
+    city !== undefined;
 
   const handleSave = async () => {
     if (!requiredFilled) {
@@ -150,6 +159,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     }
   };
 
+<<<<<<< HEAD
   const openDeleteConfirm = () => {
     setConfirmAgree(false);
     setConfirmOpen(true);
@@ -180,15 +190,14 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
       })();
 
   // 팀 아코디언 토글 + 팀원 로드
+=======
+>>>>>>> acd7da15cca99a5cb7e7d9720850dd2cb7bf6c9b
   const toggleTeam = async (teamId: number) => {
     const next = !expandedTeams[teamId];
     setExpandedTeams(prev => ({ ...prev, [teamId]: next }));
 
     if (!next) return;
-    if (postId == null) {
-      console.error('postId가 없습니다.');
-      return;
-    }
+    if (postId == null) return;
 
     if (!teamMembers[teamId]) {
       try {
@@ -204,7 +213,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     }
   };
 
-  // 팀원 참여/비참여 변경
   const setAttendance = async (teamId: number, p: Participant, nextStatus: 'PRESENT' | 'ABSENT') => {
     if (p.status === 'BLACKLISTED') {
       alert('블랙리스트는 상태 변경이 불가합니다.');
@@ -226,10 +234,18 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     }
   };
 
-  // 팀원 상세 아코디언
   const toggleMember = (participantId: number) => {
     setMemberExpanded(prev => ({ ...prev, [participantId]: !prev[participantId] }));
   };
+
+  const teamCount = teams.length;
+  const perTeamCapacity =
+    teamCount === 0
+      ? 0
+      : (() => {
+        const set = new Set(teams.map(t => t.maxCapacity));
+        return set.size === 1 ? teams[0].maxCapacity : undefined;
+      })();
 
   return (
     <AppDialog
@@ -372,8 +388,43 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
           좌표: 위도 {edited.latitude ?? '-'}, 경도 {edited.longitude ?? '-'}
         </Typography>
 
-        {/* Kakao 지도 */}
-        <Box ref={mapContainer} sx={{ width: '100%', height: 400, border: '1px solid #ddd', borderRadius: 1 }} />
+        {/* ✅ 지도 기능 추가 */}
+        <Button variant="outlined" onClick={() => setLocationModalOpen(true)}>
+          위치 변경
+        </Button>
+        <Modal open={locationModalOpen} onClose={() => setLocationModalOpen(false)}>
+          <Box sx={{ width: 600, bgcolor: 'white', p: 2, mx: 'auto', mt: '10%', borderRadius: 2 }}>
+            <LocationPicker
+              province={province}
+              city={city ?? ''} // null이면 '' 처리
+              placeName={edited.placeName ?? ''}
+              latitude={String(edited.latitude ?? '')}
+              longitude={String(edited.longitude ?? '')}
+              setProvince={(v) =>
+                setEdited((prev) => {
+                  const parts = (prev.location ?? '').split(' ');
+                  const cityPart = parts.slice(1).join(' ');
+                  return { ...prev, location: `${v} ${cityPart}`.trim() };
+                })
+              }
+              setCity={(v) =>
+                setEdited((prev) => {
+                  const parts = (prev.location ?? '').split(' ');
+                  const provincePart = parts[0] ?? '';
+                  const safeCity = v ?? ''; // null이면 ''
+                  return { ...prev, location: `${provincePart} ${safeCity}`.trim() };
+                })
+              }
+              setPlaceName={(v) => setEdited(prev => ({ ...prev, placeName: v }))}
+              setLatitude={(v) => setEdited(prev => ({ ...prev, latitude: parseFloat(v) }))}
+              setLongitude={(v) => setEdited(prev => ({ ...prev, longitude: parseFloat(v) }))}
+              modalOpen={locationModalOpen}
+            />
+
+
+            <Button onClick={() => setLocationModalOpen(false)} sx={{ mt: 2 }}>닫기</Button>
+          </Box>
+        </Modal>
 
         {/* 출석 정책 */}
         <Typography variant="h6" sx={{ mt: 1 }}>
@@ -603,4 +654,8 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
       </Dialog >
     </AppDialog >
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> acd7da15cca99a5cb7e7d9720850dd2cb7bf6c9b
