@@ -37,14 +37,14 @@ export default function MapPage() {
         <Topbar />
         <Box sx={{ px:3, py:2 }}>
           <Stack spacing={0.5} sx={{ mb: 2 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800 }}>오늘접수 현황</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800 }}>당일 접수 현황</Typography>
             <Typography variant="body2" color="text.secondary">
               {todayLabel} · {locationLabel} 기준
             </Typography>
           </Stack>
 
           {/* 지도 + 히트맵 컴포넌트 */}
-          <HeatmapMap height={420} />
+          <HeatmapMap height={700} />
         </Box>
       </Box>
     </Box>
