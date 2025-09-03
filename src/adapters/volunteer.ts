@@ -137,12 +137,13 @@ const toHHmmss = (t?: string | null) => {
 };
 
 /** "시/도 구/군" → { province, city } */
-const splitProvinceCity = (location?: string) => {
-  if (!location) return { province: null, city: null };
-  const [province, city] = location.trim().split(/\s+/, 2);
-  return { province: province ?? null, city: city ?? null };
-};
-
+function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
+  let province = region1;
+  let city: string | null = region2;
+  if (region1 === '세종특별자치시') city = null;
+  else if (region2.endsWith('군')) city = region2;
+  return { province, city };
+}
 /** ───────── 등록: 화면(KO) → 서버(Create, EN) ───────── */
 export function toCreateRequest(
   form: DetailPost & { province?: string; city?: string }
@@ -193,7 +194,7 @@ export function toCreateRequest(
 
 /** ───────── 수정: 화면(KO) → 서버(Update, EN) ───────── */
 export function toUpdateRequest(form: DetailPost): UpdatePostRequest {
-  const { province, city } = splitProvinceCity(form.location);
+   const { province, city } = parseRegion(form.location?.split(' ')[0] ?? '', form.location?.split(' ').slice(1).join(' ') ?? '');
 
   return {
     title: form.title,
