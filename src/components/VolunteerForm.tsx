@@ -241,11 +241,7 @@ export default function VolunteerForm({
               label="지역 (예: 서울특별시 관악구)"
               name="location"
               value={province ? (city ? `${province} ${city}` : province) : ''}
-              onChange={(e) => {
-                const [prov, ...rest] = e.target.value.split(' ');
-                setProvince(prov ?? '');
-                setCity(rest.length > 0 ? rest.join(' ') : null);
-              }}
+              disabled
             />
 
             {/* 상세 장소 */}
