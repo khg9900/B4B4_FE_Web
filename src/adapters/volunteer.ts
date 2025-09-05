@@ -144,6 +144,7 @@ function parseRegion(region1: string, region2: string): { province: string; city
   else if (region2.endsWith('군')) city = region2;
   return { province, city };
 }
+
 /** ───────── 등록: 화면(KO) → 서버(Create, EN) ───────── */
 export function toCreateRequest(
   form: DetailPost & { province?: string; city?: string }

@@ -1,3 +1,4 @@
+// src/api/reports.ts
 import { api } from './http';
 import { toReport, toSlice } from '../adapters/report';
 import type { ReportDto, ReportStatusEN, SliceResponse } from '../types/report';
@@ -33,6 +34,7 @@ export type TodayStats = {
   received: number;
   closed: number;
 };
+
 export async function fetchTodayReportStats(): Promise<TodayStats> {
   const res = await api.get(`${REPORT_BASE}/today`);
   const p = res.data?.payload ?? res.data ?? {};
@@ -92,5 +94,3 @@ export async function fetchDisasterMarkers(
 
   return [];
 }
-
-
