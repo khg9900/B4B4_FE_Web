@@ -231,12 +231,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
           </Select>
         </FormControl>
 
-        <TextField fullWidth label="지역 (예: 서울특별시 관악구)" name="location" value={edited.location ?? ''} onChange={handleChange} />
-        <TextField fullWidth label="상세 장소명" name="placeName" value={edited.placeName ?? ''} onChange={handleChange} />
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          좌표: 위도 {edited.latitude ?? '-'}, 경도 {edited.longitude ?? '-'}
-        </Typography>
-
         {/* ✅ 지도 기능 추가 */}
         <Button variant="outlined" onClick={() => setLocationModalOpen(true)}>
           위치 변경
@@ -274,6 +268,17 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
             <Button onClick={() => setLocationModalOpen(false)} sx={{ mt: 2 }}>닫기</Button>
           </Box>
         </Modal>
+
+        <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+          <Stack spacing={2}>
+            <TextField fullWidth label="지역 (예: 서울특별시 관악구)" name="location" value={edited.location ?? ''} disabled InputProps={{ readOnly: true }} />
+            <TextField fullWidth label="상세 장소명" name="placeName" value={edited.placeName ?? ''} onChange={handleChange} />
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              좌표: 위도 {edited.latitude ?? '-'}, 경도 {edited.longitude ?? '-'}
+            </Typography>
+          </Stack>
+        </Box>
+
 
         {/* 출석 정책 */}
         <Typography variant="h6" sx={{ mt: 1 }}>출석 정책</Typography>
