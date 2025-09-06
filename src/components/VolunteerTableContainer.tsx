@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
-import VolunteerDetailModal from './VolunteerDetailModal';
+import VolunteerDetailModal from './volunteer-detail/VolunteerDetailModal';
 import type { ListPost } from '../types/volunteer';
 
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';

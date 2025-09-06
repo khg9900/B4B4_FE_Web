@@ -8,7 +8,7 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
-import VolunteerDetailModal from './VolunteerDetailModal';
+import VolunteerDetailModal from './volunteer-detail/VolunteerDetailModal';
 import type { ListPost, PostCategory } from '../types/volunteer'; // ← PostCategory 추가
 
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';

@@ -1,5 +1,5 @@
 import AppDialog from './AppDialog';
-import VolunteerForm from './VolunteerForm';
+import VolunteerForm from './Volunteer-Form/VolunteerForm';
 import { createVolunteerPost as realCreate } from '../api/volunteerPosts';
 import type { CreatePostRequest } from '../types/volunteer';
 
