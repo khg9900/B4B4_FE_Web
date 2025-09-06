@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Box, Button, Typography, Stack } from '@mui/material';
 import Topbar from '../components/Topbar';
 import VolunteerTable from '../components/VolunteerTable';
-import VolunteerDetailModal from '../components/VolunteerDetailModal';
+import VolunteerDetailModal from '../components/volunteer-detail/VolunteerDetailModal';
 import VolunteerCreateModal from '../components/VolunteerCreateModal';
 import {fetchMyPosts, fetchPostDetail, updateVolunteerPost, deleteVolunteerPost, } from '../api/volunteerPosts';
 import { toListPostFromMy } from '../adapters/volunteer';
