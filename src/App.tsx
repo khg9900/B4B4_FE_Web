@@ -2,6 +2,9 @@
 import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import Login from './pages/Login';
+import SignupSelect from './pages/SignupSelect';
+import SignupGov from './pages/SignupGov';
+import SignupNgo from './pages/SignupNgo';
 import Dashboard from './pages/Dashboard';
 import DisasterHomePage from './pages/DisasterHomePage';
 import MapPage from './pages/MapPage';
@@ -42,6 +45,9 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignupSelect />} />
+        <Route path="/signup/gov" element={<SignupGov />} />
+        <Route path="/signup/ngo" element={<SignupNgo />} />
 
         {/* GOV 전용 */}
         <Route

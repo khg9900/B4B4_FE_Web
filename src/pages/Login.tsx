@@ -191,6 +191,7 @@ export default function Login() {
           <Button
             variant="outlined"
             fullWidth
+            onClick={() => navigate('/signup')}
             sx={{
               borderColor: '#ff7c33',
               color: '#ff7c33',
