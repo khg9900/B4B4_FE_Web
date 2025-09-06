@@ -12,6 +12,7 @@ import AppDialog from './AppDialog';
 import LocationPicker from './LocationPicker';
 import type { DetailPost, PostStatus, TeamStatus } from '../types/volunteer';
 import { fetchPostTeams, fetchTeamParticipants, updateParticipantAttendance } from '../api/volunteerPosts';
+import { GlobalStyles } from '@mui/material';
 
 type Props = {
   open: boolean;
@@ -179,6 +180,24 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
       })();
 
   return (
+  <>
+    <GlobalStyles
+    styles={(theme) => ({
+      // 네이티브 입력 위젯이 테마에 맞게 렌더되도록
+      'input[type="date"], input[type="time"]': {
+        colorScheme: theme.palette.mode, // 크롬/사파리/파이어폭스 지원
+      },
+      // 웹킷 캘린더/시계 아이콘을 다크에서 선명하게 반전
+      'input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator': {
+        filter: theme.palette.mode === 'dark' ? 'invert(1)' : 'none',
+        opacity: 1,
+      },
+      'input[type="date"]::-webkit-calendar-picker-indicator:hover, input[type="time"]::-webkit-calendar-picker-indicator:hover': {
+        cursor: 'pointer',
+      },
+    })}
+  />
+
     <AppDialog
       open={open}
       onClose={onClose}
@@ -424,5 +443,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
         </TableContainer>
       </Stack>
     </AppDialog>
+    </>
   );
 }

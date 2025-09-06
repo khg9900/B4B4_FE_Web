@@ -4,6 +4,7 @@ import {
   Box, Stack, TextField, FormControl, InputLabel, Select, MenuItem,
   Button, Typography, InputAdornment, Alert, Modal
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import type { SelectChangeEvent } from '@mui/material';
 import { POST_CATEGORIES, type PostCategory, type CreatePostRequest } from '../types/volunteer';
 import LocationPicker from './LocationPicker';
@@ -78,7 +79,7 @@ export default function VolunteerForm({
       typeof totalCapacity === 'number' && totalCapacity > 0 &&
       typeof teamCount === 'number' && teamCount > 0 &&
       typeof attendanceRadius === 'number' && attendanceRadius >= 100 &&
-      city !== null; // city null 체크
+      city !== null;
     return reqStrings.every(Boolean) && reqNumbersOk;
   }, [
     title, content, volunteerDate, volunteerStartTime, volunteerEndTime,
@@ -139,6 +140,19 @@ export default function VolunteerForm({
     }
   };
 
+  // 다크/라이트 공통 피커 가시성
+  const theme = useTheme();
+  const pickerSx = useMemo(
+    () => ({
+      '& input': { colorScheme: theme.palette.mode },
+      '& input::-webkit-calendar-picker-indicator': {
+        filter: theme.palette.mode === 'dark' ? 'invert(1)' : 'none',
+        opacity: 1,
+      },
+    }),
+    [theme.palette.mode],
+  );
+
   return (
     <Box sx={framed ? { p: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 } : undefined}>
       <Stack spacing={2.5}>
@@ -189,6 +203,7 @@ export default function VolunteerForm({
             value={volunteerDate}
             onChange={(e) => setVolunteerDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: pickerSx }}
           />
           <TextField
             fullWidth
@@ -197,6 +212,7 @@ export default function VolunteerForm({
             value={volunteerStartTime}
             onChange={(e) => setVolunteerStartTime(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: pickerSx }}
           />
           <TextField
             fullWidth
@@ -205,12 +221,12 @@ export default function VolunteerForm({
             value={volunteerEndTime}
             onChange={(e) => setVolunteerEndTime(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: pickerSx }}
           />
         </Stack>
 
         {/* 모집 기간 */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-
           <TextField
             fullWidth
             type="date"
@@ -218,6 +234,7 @@ export default function VolunteerForm({
             value={recruitmentStartDate}
             onChange={(e) => setRecruitmentStartDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: pickerSx }}
           />
           <TextField
             fullWidth
@@ -226,6 +243,7 @@ export default function VolunteerForm({
             value={recruitmentEndDate}
             onChange={(e) => setRecruitmentEndDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: pickerSx }}
           />
         </Stack>
           
@@ -235,7 +253,6 @@ export default function VolunteerForm({
         {/* 지역/상세 장소/좌표 박스 */}
         <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
           <Stack spacing={2}>
-            {/* 지역 */}
             <TextField
               fullWidth
               label="지역 (예: 서울특별시 관악구)"
@@ -243,8 +260,6 @@ export default function VolunteerForm({
               value={province ? (city ? `${province} ${city}` : province) : ''}
               disabled
             />
-
-            {/* 상세 장소 */}
             <TextField
               fullWidth
               label="상세 장소명"
@@ -252,8 +267,6 @@ export default function VolunteerForm({
               value={placeName}
               onChange={(e) => setPlaceName(e.target.value)}
             />
-
-            {/* 좌표 */}
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               좌표: 위도 {latitude ? parseFloat(latitude).toFixed(4) : '-'}, 
               경도 {longitude ? parseFloat(longitude).toFixed(4) : '-'}
@@ -261,7 +274,7 @@ export default function VolunteerForm({
           </Stack>
         </Box>
 
-        {/* 인원/팀 (팀 개수 설정 → 팀당 정원 자동 계산) */}
+        {/* 인원/팀 */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
             fullWidth
@@ -301,6 +314,7 @@ export default function VolunteerForm({
             value={attendanceStartTime}
             onChange={(e) => setAttendanceStartTime(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: pickerSx }}
           />
           <TextField
             fullWidth
@@ -309,11 +323,12 @@ export default function VolunteerForm({
             value={attendanceEndTime}
             onChange={(e) => setAttendanceEndTime(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: pickerSx }}
           />
           <TextField
             fullWidth
             type="number"
-            inputProps={{ min: 100 }} // ⬅️ 최소 100
+            inputProps={{ min: 100 }}
             label="출석 인정 반경"
             value={attendanceRadius}
             onChange={(e) => setAttendanceRadius(e.target.value === '' ? '' : Number(e.target.value))}
@@ -340,7 +355,7 @@ export default function VolunteerForm({
 
       {/* 위치 선택 모달 */}
       <Modal open={locationModalOpen} onClose={() => setLocationModalOpen(false)}>
-        <Box sx={{ width: 500, bgcolor: 'white', p: 2, mx: 'auto', mt: '10%', borderRadius: 2 }}>
+        <Box sx={{ width: 500, bgcolor: 'background.paper', p: 2, mx: 'auto', mt: '10%', borderRadius: 2 }}>
           <LocationPicker
             province={province}
             city={city}
