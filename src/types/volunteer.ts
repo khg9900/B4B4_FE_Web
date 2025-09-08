@@ -1,3 +1,4 @@
+//volunteer.ts
 // === 화면 라벨(한글) ===
 export type PostCategory = '봉사활동 모집' | '구호물품 지원';
 export type PostStatus   = '모집 중' | '모집 마감' | '봉사 완료';
@@ -10,9 +11,10 @@ export interface ListPost {
   id: number;
   title: string;
   volunteerDate: string;        // YYYY-MM-DD
-  location: string;             // 예: "서울특별시 강남구"
+  location: string;             // "서울특별시 강남구"
   category: PostCategory;
-  totalCapacity: number;
+  totalCapacity: number;        // PostTotalResponse.totalCapacity
+  appliedCount: number;         // PostTotalResponse.currentParticipants
   recruitmentStartDate: string; // YYYY-MM-DD
   recruitmentEndDate: string;   // YYYY-MM-DD
   status: PostStatus;
