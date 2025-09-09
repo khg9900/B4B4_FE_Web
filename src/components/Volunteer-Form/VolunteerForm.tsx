@@ -1,3 +1,4 @@
+// src/components/Volunteer-Form/VolunteerForm.tsx
 import { useMemo } from 'react';
 import { Box, Stack, Button } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -38,9 +39,11 @@ export default function VolunteerForm({
     }),
     [theme.palette.mode]
   );
+  // 알림용 검증 결과
+  const alerts = form.getAlerts();
 
   const handleSubmit = async () => {
-    if (form.isSubmitDisabled) return; // 모든 필드가 유효해야 제출 가능
+    if (form.isSubmitDisabled) return;
 
     form.setSubmitting(true);
     try {
@@ -48,8 +51,8 @@ export default function VolunteerForm({
         title: form.title,
         content: form.content,
         volunteerDate: form.volunteerDate,
-        volunteerStartTime: form.volunteerStartTime + ':00',
-        volunteerEndTime: form.volunteerEndTime + ':00',
+        volunteerStartTime: form.volunteerStartTime,
+        volunteerEndTime: form.volunteerEndTime,
         recruitmentStartDate: form.recruitmentStartDate,
         recruitmentEndDate: form.recruitmentEndDate,
         totalCapacity: form.totalCapacity as number,
@@ -63,8 +66,8 @@ export default function VolunteerForm({
           longitude: parseFloat(form.longitude)
         },
         attendancePolicy: {
-          checkinStart: `${form.volunteerDate}T${form.attendanceStartTime}:00`,
-          checkinEnd: `${form.volunteerDate}T${form.attendanceEndTime}:00`,
+          checkinStart: `${form.volunteerDate}T${form.attendanceStartTime}`,
+          checkinEnd: `${form.volunteerDate}T${form.attendanceEndTime}`,
           allowedRadiusM: typeof form.attendanceRadius === 'number' ? form.attendanceRadius : 100
         }
       };
@@ -81,8 +84,17 @@ export default function VolunteerForm({
   return (
     <Box sx={{ p: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
       <Stack spacing={2.5}>
-        <TitleCategorySection title={form.title} setTitle={form.setTitle} category={form.category} setCategory={form.setCategory} />
-        <ContentSection content={form.content} setContent={form.setContent} />
+        <TitleCategorySection
+          title={form.title}
+          setTitle={form.setTitle}
+          category={form.category}
+          setCategory={form.setCategory}
+        />
+
+        <ContentSection
+          content={form.content}
+          setContent={form.setContent}
+        />
 
         <VolunteerDateSection
           volunteerDate={form.volunteerDate}
@@ -93,8 +105,9 @@ export default function VolunteerForm({
           setEndTime={form.setVolunteerEndTime}
           pickerSx={pickerSx}
           errors={{
-            startTime: form.getAlerts().volunteerStartTime,
-            endTime: form.getAlerts().volunteerEndTime, // 종료시간이 시작시간보다 빠르면 빨간 글씨 표시
+            volunteerDate: alerts.volunteerDate,
+            startTime: alerts.volunteerStartTime,
+            endTime: alerts.volunteerEndTime
           }}
         />
 
@@ -105,7 +118,8 @@ export default function VolunteerForm({
           setRecruitmentEndDate={form.setRecruitmentEndDate}
           pickerSx={pickerSx}
           errors={{
-            endDate: form.getAlerts().recruitmentEndDate, // 종료일이 시작일보다 빠르면 빨간 글씨 표시
+            recruitmentStartDate: alerts.recruitmentStartDate,
+            recruitmentEndDate: alerts.recruitmentEndDate
           }}
         />
 
@@ -136,18 +150,18 @@ export default function VolunteerForm({
           setAttendanceRadius={form.setAttendanceRadius}
           pickerSx={pickerSx}
           errors={{
-            startTime: form.getAlerts().attendanceStartTime,
-            endTime: form.getAlerts().attendanceEndTime,
-            radius: form.getAlerts().attendanceRadius, // 반경이 100보다 작으면 빨간 글씨 표시
+            startTime: alerts.attendanceStartTime,
+            endTime: alerts.attendanceEndTime,
+            radius: alerts.attendanceRadius
           }}
         />
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-          <Button onClick={onCancel} color="inherit">취소</Button>
+          <Button onClick={onCancel ?? (() => {})} color="inherit">취소</Button>
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={form.submitting || form.isSubmitDisabled}
+            disabled={form.submitting || form.isSubmitDisabled || Object.values(alerts).some(Boolean)}
             sx={{ bgcolor: '#ff7c33', ':hover': { bgcolor: '#ff6a14' } }}
           >
             {submitLabel}
@@ -158,16 +172,18 @@ export default function VolunteerForm({
       <LocationModal
         open={form.locationModalOpen}
         onClose={() => form.setLocationModalOpen(false)}
-        province={form.province}
-        setProvince={form.setProvince}
-        city={form.city}
-        setCity={form.setCity}
-        placeName={form.locationName}
-        setPlaceName={form.setLocationName}
-        latitude={form.latitude}
-        setLatitude={form.setLatitude}
-        longitude={form.longitude}
-        setLongitude={form.setLongitude}
+        {...{
+          province: form.province,
+          setProvince: form.setProvince,
+          city: form.city,
+          setCity: form.setCity,
+          placeName: form.locationName,
+          setPlaceName: form.setLocationName,
+          latitude: form.latitude,
+          setLatitude: form.setLatitude,
+          longitude: form.longitude,
+          setLongitude: form.setLongitude
+        }}
       />
     </Box>
   );
