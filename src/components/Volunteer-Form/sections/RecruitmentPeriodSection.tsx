@@ -8,8 +8,8 @@ type Props = {
   setRecruitmentEndDate: React.Dispatch<React.SetStateAction<string>>;
   pickerSx?: object;
   errors?: {
-    startDate?: string;
-    endDate?: string;
+    recruitmentStartDate?: string;
+    recruitmentEndDate?: string;
   };
 };
 
@@ -31,8 +31,8 @@ export default function RecruitmentPeriodSection({
         onChange={(e) => setRecruitmentStartDate(e.target.value)}
         InputLabelProps={{ shrink: true }}
         InputProps={{ sx: pickerSx }}
-        error={!!errors?.startDate}
-        helperText={errors?.startDate}
+        error={!!errors?.recruitmentStartDate}
+        helperText={errors?.recruitmentStartDate}
       />
       <TextField
         fullWidth
@@ -42,8 +42,8 @@ export default function RecruitmentPeriodSection({
         onChange={(e) => setRecruitmentEndDate(e.target.value)}
         InputLabelProps={{ shrink: true }}
         InputProps={{ sx: pickerSx }}
-        error={!!errors?.endDate}
-        helperText={errors?.endDate}
+        error={!!errors?.recruitmentEndDate}
+        helperText={errors?.recruitmentEndDate}
       />
     </Stack>
   );

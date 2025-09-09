@@ -4,9 +4,13 @@ type Props = {
   startDate?: string;
   endDate?: string;
   onChange: (e: any) => void;
+  errors?: {
+    startDate?: string;
+    endDate?: string;
+  };
 };
 
-export default function RecruitmentDateSection({ startDate, endDate, onChange }: Props) {
+export default function RecruitmentDateSection({ startDate, endDate, onChange, errors }: Props) {
   return (
     <Stack direction="row" spacing={2}>
       <Box flex={1}>
@@ -18,6 +22,8 @@ export default function RecruitmentDateSection({ startDate, endDate, onChange }:
           value={startDate ?? ''}
           onChange={onChange}
           InputLabelProps={{ shrink: true }}
+          error={!!errors?.startDate}
+          helperText={errors?.startDate}
         />
       </Box>
       <Box flex={1}>
@@ -29,6 +35,8 @@ export default function RecruitmentDateSection({ startDate, endDate, onChange }:
           value={endDate ?? ''}
           onChange={onChange}
           InputLabelProps={{ shrink: true }}
+          error={!!errors?.endDate}
+          helperText={errors?.endDate}
         />
       </Box>
     </Stack>

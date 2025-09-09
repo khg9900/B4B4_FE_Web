@@ -8,12 +8,7 @@ import type { SelectChangeEvent } from '@mui/material/Select';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import VolunteerDetailModal from './volunteer-detail/VolunteerDetailModal';
-<<<<<<< HEAD
-import type { ListPost, PostCategory } from '../types/volunteer'; // ← PostCategory 추가
-=======
 import type { ListPost, PostCategory } from '../types/volunteer';
->>>>>>> e81a267a933c2ea8d36d9f7f90c93764fcc29212
-
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -27,6 +22,7 @@ const CATEGORY_OPTIONS: PostCategory[] = ['봉사활동 모집', '구호물품 �
 const toISODate = (d: Dayjs | null) => (d ? d.format('YYYY-MM-DD') : '');
 
 function toDetailData(p: ListPost): DetailPost {
+  const { province, city } = parseRegion(p.location.split(' ')[0], p.location.split(' ')[1] || '');
   return {
     id: p.id,
     title: p.title,
@@ -34,6 +30,9 @@ function toDetailData(p: ListPost): DetailPost {
     category: p.category,
     status: p.status,
     totalCapacity: Number(p.totalCapacity ?? 0),
+    appliedCount: Number(p.appliedCount ?? 0),
+    province: province,
+    city: city || null,
     location: p.location,
     placeName: '',
     latitude: 0,
@@ -47,7 +46,13 @@ function toDetailData(p: ListPost): DetailPost {
     attendanceRadius: 0,
   };
 }
-
+export function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
+  let province = region1;
+  let city: string | null = region2;
+  if (region1.includes('세종')) city = '';
+  else if (region2.endsWith('군')) city = region2;
+  return { province, city };
+}
 type VolunteerTableProps = {
   rows: ListPost[];
   onRowClick?: (id: number) => void;

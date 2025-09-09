@@ -37,6 +37,8 @@ export interface DetailPost {
 
   // 화면 표시는 문자열 "시/도 구/군"
   location: string;
+  province: string;
+  city?: string | null;
   placeName?: string;
   latitude?: number | null;
   longitude?: number | null;

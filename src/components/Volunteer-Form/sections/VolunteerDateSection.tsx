@@ -36,6 +36,7 @@ export default function VolunteerDateSection({
         onChange={(e) => setVolunteerDate(e.target.value)}
         InputLabelProps={{ shrink: true }}
         InputProps={{ sx: pickerSx }}
+        inputProps={{ min: new Date().toISOString().split('T')[0] }} // 오늘 날짜 이후만 선택 가능
         error={!!errors?.volunteerDate}
         helperText={errors?.volunteerDate}
       />

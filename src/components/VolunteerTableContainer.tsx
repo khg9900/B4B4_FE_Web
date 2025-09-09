@@ -24,7 +24,7 @@ function toDetailData(p: ListPost): DetailPost {
     title: p.title,
     content: '',
     status: p.status,
-    totalCapacity: Number(p.capacity) || 0,
+    totalCapacity: Number(p.totalCapacity) || 0,
     teamCount: 5,
     perTeamCapacity: 0,
     appliedCount: Number(p.appliedCount) || 0,
@@ -378,7 +378,7 @@ export default function VolunteerTable({ rows, onRowClick, onSearch }: Volunteer
                 <TableCell align="center">{post.volunteerDate}</TableCell>
                 <TableCell align="center">{post.location}</TableCell>
                 <TableCell align="center">{post.category}</TableCell>
-                <TableCell align="center">{post.appliedCount} / {post.capacity}</TableCell>
+                <TableCell align="center">{post.appliedCount} / {post.totalCapacity}</TableCell>
                 <TableCell align="center">
                   {post.recruitmentStartDate} ~ {post.recruitmentEndDate}
                 </TableCell>
