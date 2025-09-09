@@ -42,7 +42,7 @@ export default function Post() {
     setLoading(true);
     try {
       const slice = await fetchMyPosts(query); // { content, page, size, hasNext }
-      setRows(slice.content.map(toListPostFromMy));
+      setRows(slice.content);
       setPage(slice.page);
       setSize(slice.size);
       setHasNext(slice.hasNext);
