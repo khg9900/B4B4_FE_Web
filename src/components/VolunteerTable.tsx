@@ -7,36 +7,19 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
-<<<<<<< HEAD
-import VolunteerDetailModal from './VolunteerDetailModal';
-import type { ListPost, PostCategory } from '../types/volunteer'; // ← PostCategory 추가
-=======
 import VolunteerDetailModal from './volunteer-detail/VolunteerDetailModal';
 import type { ListPost, PostCategory } from '../types/volunteer';
->>>>>>> e81a267a933c2ea8d36d9f7f90c93764fcc29212
-
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
 import 'dayjs/locale/ko';
-
-<<<<<<< HEAD
-import useRegionsCsv from '../hooks/useRegionsCsv'; // ← CSV 훅
-
-type DetailPost = React.ComponentProps<typeof VolunteerDetailModal>['data'];
-
-// 하드코딩 카테고리 옵션
-const CATEGORY_OPTIONS: PostCategory[] = ['봉사활동 모집', '구호물품 지원'] as const;
-
-=======
 import useRegionsCsv from '../hooks/useRegionsCsv';
 
 type DetailPost = React.ComponentProps<typeof VolunteerDetailModal>['data'];
 const CATEGORY_OPTIONS: PostCategory[] = ['봉사활동 모집', '구호물품 지원'] as const;
 const toISODate = (d: Dayjs | null) => (d ? d.format('YYYY-MM-DD') : '');
 
->>>>>>> e81a267a933c2ea8d36d9f7f90c93764fcc29212
 function toDetailData(p: ListPost): DetailPost {
   return {
     id: p.id,
@@ -75,11 +58,6 @@ type VolunteerTableProps = {
   onSizeChange?: (size: number) => void;
 };
 
-<<<<<<< HEAD
-const toISODate = (d: Dayjs | null) => (d ? d.format('YYYY-MM-DD') : '');
-
-=======
->>>>>>> e81a267a933c2ea8d36d9f7f90c93764fcc29212
 export default function VolunteerTable({
   rows,
   onRowClick,
@@ -91,20 +69,10 @@ export default function VolunteerTable({
   const [selectedPost, setSelectedPost] = useState<DetailPost | null>(null);
   const [open, setOpen] = useState(false);
 
-<<<<<<< HEAD
-  // 🔹 CSV에서 지역 옵션 로드
   const { provinces, citiesByProvince, loading: regionLoading, error: regionError } = useRegionsCsv('/regions.csv');
 
-  // ── 상단 필터 상태 ──
-  const [provinceFilter, setProvinceFilter] = useState<string>(''); // 시/도
-  const [cityFilter, setCityFilter] = useState<string>('');         // 시·군·구
-=======
-  const { provinces, citiesByProvince, loading: regionLoading, error: regionError } =
-    useRegionsCsv('/regions.csv');
-
   const [provinceFilter, setProvinceFilter] = useState<string>('');
-  const [cityFilter, setCityFilter] = useState<string>('');
->>>>>>> e81a267a933c2ea8d36d9f7f90c93764fcc29212
+  const [cityFilter, setCityFilter] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [volStart, setVolStart] = useState<Dayjs | null>(null);
@@ -112,10 +80,6 @@ export default function VolunteerTable({
   const [volFrom, setVolFrom] = useState<string>('');
   const [volTo, setVolTo] = useState<string>('');
 
-<<<<<<< HEAD
-  // 시/도 선택에 따른 시·군·구 옵션
-=======
->>>>>>> e81a267a933c2ea8d36d9f7f90c93764fcc29212
   const cityOptions = useMemo(() => {
     if (!provinceFilter) return [];
     return citiesByProvince[provinceFilter] ?? [];
@@ -157,39 +121,17 @@ export default function VolunteerTable({
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ xs: 'stretch', md: 'center' }} useFlexGap flexWrap="wrap">
           <LabelRow label="봉사 지역">
             <Stack direction="row" spacing={1.25}>
-<<<<<<< HEAD
-              {/* 시/도 (CSV 기반) */}
-              <Autocomplete
-                size="small"
-                sx={{ minWidth: 160 }}
-                options={provinces}
-                loading={regionLoading}
-                value={provinceFilter || null}
-=======
               <Autocomplete
                 size="small" sx={{ minWidth: 160 }} options={provinces}
                 loading={regionLoading} value={provinceFilter || null}
->>>>>>> e81a267a933c2ea8d36d9f7f90c93764fcc29212
                 onChange={(_, v) => { setProvinceFilter(v ?? ''); setCityFilter(''); }}
                 renderInput={(p) => <TextField {...p} placeholder="시/도" />} clearOnEscape
               />
-<<<<<<< HEAD
-              {/* 시·군·구 (CSV 기반) */}
-              <Autocomplete
-                size="small"
-                sx={{ minWidth: 160 }}
-                options={cityOptions}
-                loading={regionLoading}
-                value={cityFilter || null}
-                onChange={(_, v) => setCityFilter(v ?? '')}
-                renderInput={(params) => <TextField {...params} placeholder="시/군/구" />}
-=======
               <Autocomplete
                 size="small" sx={{ minWidth: 160 }} options={cityOptions}
                 loading={regionLoading} value={cityFilter || null}
                 onChange={(_, v) => setCityFilter(v ?? '')}
                 renderInput={(p) => <TextField {...p} placeholder="시/군/구" />}
->>>>>>> e81a267a933c2ea8d36d9f7f90c93764fcc29212
                 disabled={!provinceFilter || (citiesByProvince[provinceFilter]?.length ?? 0) === 0}
                 clearOnEscape
               />
@@ -224,20 +166,10 @@ export default function VolunteerTable({
 
           <LabelRow label="봉사 유형" stretch={false} minWidth={260}>
             <Autocomplete
-<<<<<<< HEAD
-              size="small"
-              sx={{ width: 200 }}
-              options={CATEGORY_OPTIONS as readonly PostCategory[]}
-              value={(categoryFilter as PostCategory) || null}
-              onChange={(_, v) => setCategoryFilter((v as PostCategory) ?? '')}
-              renderInput={(params) => <TextField {...params} placeholder="유형 선택" />}
-              clearOnEscape
-=======
               size="small" sx={{ width: 200 }} options={CATEGORY_OPTIONS as readonly PostCategory[]}
               value={(categoryFilter as PostCategory) || null}
               onChange={(_, v) => setCategoryFilter((v as PostCategory) ?? '')}
               renderInput={(p) => <TextField {...p} placeholder="유형 선택" />} clearOnEscape
->>>>>>> e81a267a933c2ea8d36d9f7f90c93764fcc29212
             />
           </LabelRow>
 
