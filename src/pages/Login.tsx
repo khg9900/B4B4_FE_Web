@@ -8,6 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import { api } from '../api/http';
 import { saveTokens, getAccessToken, getCurrentRole, type UserRole } from '../auth/tokenStore';
+import { registerDeviceAfterLogin } from '../lib/fcm';
 
 // 역할별 기본 랜딩 경로
 function preferredLanding(role: UserRole | null): string {
@@ -68,6 +69,8 @@ export default function Login() {
 
       if (remember) localStorage.setItem('savedId', email);
       else localStorage.removeItem('savedId');
+
+      void registerDeviceAfterLogin();
 
       const role = getCurrentRole();
       let target = preferredLanding(role);
