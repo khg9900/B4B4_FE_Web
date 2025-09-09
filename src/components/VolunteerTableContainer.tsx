@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
-import VolunteerDetailModal from './VolunteerDetailModal';
+import VolunteerDetailModal from './volunteer-detail/VolunteerDetailModal';
 import type { ListPost } from '../types/volunteer';
 
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -24,7 +24,7 @@ function toDetailData(p: ListPost): DetailPost {
     title: p.title,
     content: '',
     status: p.status,
-    totalCapacity: Number(p.capacity) || 0,
+    totalCapacity: Number(p.totalCapacity) || 0,
     teamCount: 5,
     perTeamCapacity: 0,
     appliedCount: Number(p.appliedCount) || 0,

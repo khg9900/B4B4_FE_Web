@@ -44,6 +44,7 @@ export function toListPostFromMy(s: any): ListPost {
     location: joinLocation(s.province, s.city),
     category: CAT_EN_TO_KO[s.category] ?? (s.category as PostCategory),
     totalCapacity: Number(s.totalCapacity ?? 0),
+    appliedCount: Number(s.appliedCount ?? 0),
     recruitmentStartDate: s.recruitmentStartDate ?? '',
     recruitmentEndDate: s.recruitmentEndDate ?? '',
     status: STAT_EN_TO_KO[s.status] ?? (s.status as PostStatus),
