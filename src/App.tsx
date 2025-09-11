@@ -1,17 +1,17 @@
 // src/App.tsx
 import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import Login from './pages/Login';
-import SignupSelect from './pages/SignupSelect';
-import SignupGov from './pages/SignupGov';
-import SignupNgo from './pages/SignupNgo';
-import Dashboard from './pages/Dashboard';
-import DisasterHomePage from './pages/DisasterHomePage';
-import MapPage from './pages/MapPage';
-import Post from './pages/VolunteerPosts';
+import Login from './pages/auth/Login';
+import SignupSelect from './pages/auth/SignupSelect';
+import SignupGov from './pages/auth/SignupGov';
+import SignupNgo from './pages/auth/SignupNgo';
+import Dashboard from './pages/report/Dashboard';
+import DisasterHomePage from './pages/report/DisasterHomePage';
+import MapPage from './pages/report/MapPage';
+import Post from './pages/volunteer/VolunteerPosts';
 import NotFound from './pages/NotFound';
 import Forbidden from './pages/Forbidden';
-import RequireRole from './components/RequireRole';
+import RequireRole from './components/auth/RequireRole';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';

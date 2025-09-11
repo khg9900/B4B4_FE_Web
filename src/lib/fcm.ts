@@ -5,7 +5,6 @@ import { api } from '../api/http';
 
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY as string;
 
-/** 백엔드 enum에 맞춘 OS 매핑 */
 function detectDeviceOs(): 'ANDROID' | 'IOS' | 'WEB' {
   const ua = navigator.userAgent || '';
   if (/Android/i.test(ua)) return 'ANDROID';
@@ -13,18 +12,16 @@ function detectDeviceOs(): 'ANDROID' | 'IOS' | 'WEB' {
   return 'WEB';
 }
 
-/** 브라우저/디바이스 메타 */
 function getBrowserDeviceMeta() {
   const ua = navigator.userAgent || '';
   const model =
     (navigator as any).userAgentData?.brands?.map((b: any) => `${b.brand} ${b.version}`).join('; ') ||
     (navigator as any).vendor ||
     'web';
-  const osVersion = ua; // 간단히 UA 전체를 버전 문자열로 사용
+  const osVersion = ua;
   return { model, osVersion };
 }
 
-/** SW 보장(이미 등록돼 있으면 재사용) */
 async function ensureSw(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) return null;
   const existing = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
@@ -60,7 +57,7 @@ export async function registerDeviceAfterLogin(): Promise<string | null> {
 
     await api.post('/devices', {
       type: 'DESKTOP', // 웹은 DESKTOP로 통일(백엔드 enum 기준)
-      os,              // 'WEB' | 'ANDROID' | 'IOS'
+      os,
       osVersion,
       model,
       fcmToken: token,
