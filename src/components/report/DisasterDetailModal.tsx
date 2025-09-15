@@ -12,9 +12,9 @@ import {
   CircularProgress,
   Paper,
 } from '@mui/material';
-import AppDialog from './AppDialog';
-import type { ReportDto, ReportStatusEN } from '../types/report';
-import { DISASTER_TYPE_KO, REPORT_STATUS_KO } from '../types/report';
+import AppDialog from '../AppDialog';
+import type { ReportDto, ReportStatusEN } from '../../types/report';
+import { DISASTER_TYPE_KO, REPORT_STATUS_KO } from '../../types/report';
 
 type Props = {
   open: boolean;

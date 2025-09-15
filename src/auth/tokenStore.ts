@@ -1,5 +1,5 @@
 // src/auth/tokenStore.ts
-export type UserRole = 'GOV' | 'NGO' | 'USER' | 'ADMIN';
+export type UserRole = 'GOV' | 'NGO';
 
 const ACCESS_KEY = 'AT';
 const REFRESH_KEY = 'RT';
@@ -81,7 +81,5 @@ export function getCurrentRole(): UserRole | null {
   const s = raw.toUpperCase().replace(/^ROLE_/, '');
   if (s.includes('GOV')) return 'GOV';
   if (s.includes('NGO')) return 'NGO';
-  if (s.includes('ADMIN')) return 'ADMIN';
-  if (s.includes('USER')) return 'USER';
   return null;
 }

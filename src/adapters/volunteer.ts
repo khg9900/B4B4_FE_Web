@@ -43,6 +43,7 @@ export function toListPostFromMy(s: any): ListPost {
     volunteerDate: s.volunteerDate ?? '',
     location: joinLocation(s.province, s.city),
     category: CAT_EN_TO_KO[s.category] ?? (s.category as PostCategory),
+    appliedCount: Number(s.appliedCount ?? 0),
     totalCapacity: Number(s.totalCapacity ?? 0),
     recruitmentStartDate: s.recruitmentStartDate ?? '',
     recruitmentEndDate: s.recruitmentEndDate ?? '',
@@ -98,7 +99,8 @@ export function toDetail(s: any): DetailPost {
     content: s.content ?? '',
     category: CAT_EN_TO_KO[s.category] ?? (s.category as PostCategory) ?? '봉사활동 모집',
     status: STAT_EN_TO_KO[s.status] ?? (s.status as PostStatus) ?? '모집 중',
-
+    province: province ?? '',
+    city: city ?? null,
     volunteerDate: s.volunteerDate ?? '',
     volunteerStartTime: s.volunteerStartTime ?? '',
     volunteerEndTime: s.volunteerEndTime ?? '',
@@ -144,6 +146,7 @@ function parseRegion(region1: string, region2: string): { province: string; city
   else if (region2.endsWith('군')) city = region2;
   return { province, city };
 }
+
 /** ───────── 등록: 화면(KO) → 서버(Create, EN) ───────── */
 export function toCreateRequest(
   form: DetailPost & { province?: string; city?: string }

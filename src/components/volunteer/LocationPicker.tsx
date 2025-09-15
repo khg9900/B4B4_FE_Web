@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Box, TextField, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
-import { loadKakaoMap, searchPlace } from '../utils/kakaoLoader';
+import { loadKakaoMap, searchPlace } from '../../utils/kakaoLoader';
 
 type Props = {
   province: string;
@@ -15,9 +15,8 @@ type Props = {
   setLongitude: (v: string) => void;
   modalOpen: boolean;
 };
-
 // coord2regioncode SDK 결과 기반 특수 처리
-function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
+export function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
   let province = region1;
   let city: string | null = region2;
   if (region1 === '세종특별자치시') city = null;
@@ -35,7 +34,7 @@ export default function LocationPicker({
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 지도 초기화 및 마커 반영
+  // 지도 초기화 및 마커
   useEffect(() => {
     if (!mapRef.current) return;
     let map: any;
@@ -43,13 +42,12 @@ export default function LocationPicker({
     loadKakaoMap().then((kakao) => {
       const lat = latitude ? parseFloat(latitude) : 37.5665;
       const lng = longitude ? parseFloat(longitude) : 126.978;
-
       const center = new kakao.maps.LatLng(lat, lng);
       map = new kakao.maps.Map(mapRef.current, { center, level: 4 });
 
       markerRef.current = new kakao.maps.Marker({ map, position: center });
 
-      // 지도 클릭 이벤트
+      // 지도 클릭
       kakao.maps.event.addListener(map, 'click', (mouseEvent: any) => {
         const latlng = mouseEvent.latLng;
         markerRef.current.setPosition(latlng);

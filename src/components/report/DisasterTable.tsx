@@ -22,9 +22,9 @@ import {
   type ReportStatusEN,
   DISASTER_TYPE_KO,
   REPORT_STATUS_KO,
-} from '../types/report';
-import { fetchReportsSlice, updateReportStatus } from '../api/reports';
-import { getMyInfoCached } from '../api/user';
+} from '../../types/report';
+import { fetchReportsSlice, updateReportStatus } from '../../api/reports';
+import { getMyInfoCached } from '../../api/user';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
 
@@ -69,8 +69,16 @@ export default function DisasterTable() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState<ReportDto | null>(null);
 
-  // 스크롤 기준점
+  // (선택) 예전 코드 호환용 — 꼭 쓸 필요는 없음
   const topRef = useRef<HTMLDivElement>(null);
+
+  // ✅ 1) 브라우저 자동 스크롤 복원 끄고, 마운트 시 최상단으로
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
 
   // ✅ 내 정보에서 province/city 받아와 초기 쿼리에 주입
   useEffect(() => {
@@ -87,6 +95,8 @@ export default function DisasterTable() {
           gu,
           page: 0, // 지역이 바뀌면 0페이지부터
         }));
+        // 지역이 확정되면 상단으로
+        if (si && gu) window.scrollTo({ top: 0, behavior: 'auto' });
       } catch (e) {
         console.error('[DisasterTable] getMyInfoCached failed:', e);
       }
@@ -94,7 +104,7 @@ export default function DisasterTable() {
     return () => { ignore = true; };
   }, []);
 
-  // 필터 → 쿼리 반영(+page reset)
+  // 상태 필터 → 쿼리 반영(+page reset)
   useEffect(() => {
     setQuery((q) => ({
       ...q,
@@ -103,27 +113,32 @@ export default function DisasterTable() {
     }));
   }, [statusFilter]);
 
-  // 페이지 변경 시 상단으로
+  // ✅ 2) 페이지 바뀔 때마다 최상단으로
   useEffect(() => {
-    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // (이전 코드 유지하고 싶다면)
+    // topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [query.page]);
 
   const load = useCallback(async () => {
     // 지역 정보가 아직 준비되지 않았으면 요청하지 않음
-    if (!query.si || !query.gu) return;
+    if (!query.si) return;
 
     try {
       setLoading(true);
       setErrorMsg('');
       const slice = await fetchReportsSlice({
         si: query.si,
-        gu: query.gu,
+        gu: query.gu ?? '',
         status: query.status,
         page: query.page,
         size: query.size,
       });
       setItems(slice.content);
       setHasNext(slice.hasNext);
+
+      // ✅ 3) 데이터 갱신 직후에도 상단 정렬 유지
+      window.scrollTo({ top: 0, behavior: 'auto' });
     } catch (e: any) {
       setErrorMsg(e?.message || '목록 조회 실패');
     } finally {
@@ -164,6 +179,7 @@ export default function DisasterTable() {
 
   return (
     <Box px={3} py={2} sx={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      {/* (선택) 호환용 ref — 남겨둬도 무관 */}
       <div ref={topRef} />
 
       {/* 타이틀 단독 */}
@@ -269,7 +285,7 @@ export default function DisasterTable() {
             {!loading && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                  {query.si && query.gu ? '데이터가 없습니다.' : '지역 정보를 불러오는 중…'}
+                  {query.si ? '데이터가 없습니다.' : '지역 정보를 불러오는 중…'}
                 </TableCell>
               </TableRow>
             )}

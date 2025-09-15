@@ -6,7 +6,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard';
 import PlaceIcon from '@mui/icons-material/Place';
 import { NavLink } from 'react-router-dom';
-import LogoImage from '../assets/logo.png';
+import LogoImage from '../../assets/logo.png';
 
 const menuItems = [
   { text: '홈',       icon: <HomeIcon />,            path: '/home' },

@@ -5,6 +5,7 @@ import type { ReportDto, ReportStatusEN, SliceResponse } from '../types/report';
 const REPORT_BASE = '/reports';
 
 /** 슬라이스 조회 (페이지/상태/지역별) */
+/** 슬라이스 조회 (페이지/상태/지역별) */
 export async function fetchReportsSlice(params: {
   si: string;
   gu: string;
@@ -92,5 +93,3 @@ export async function fetchDisasterMarkers(
 
   return [];
 }
-
-

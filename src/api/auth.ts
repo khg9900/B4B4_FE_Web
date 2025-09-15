@@ -8,6 +8,18 @@ type LoginResp = {
   refreshToken?: string;
 };
 
+export type UserRole = 'GOV' | 'NGO';
+
+export type SignUpRequestDto = {
+  email: string;
+  password: string;
+  name: string;
+  phoneNumber: string;
+  userRole: UserRole;
+  province?: string | null;
+  city?: string | null;
+};
+
 export async function login(email: string, password: string) {
   const res = await api.post('/auth/login', { email, password });
   const payload = (res.data?.payload ?? res.data) as LoginResp;
@@ -16,6 +28,11 @@ export async function login(email: string, password: string) {
     saveTokens(payload.accessToken, payload.refreshToken);
   }
   return payload;
+}
+
+export async function signup(body: SignUpRequestDto) {
+  const res = await api.post('/auth/signup', body);
+  return res.data;
 }
 
 export async function logout() {

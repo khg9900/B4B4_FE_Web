@@ -1,4 +1,3 @@
-// src/components/VolunteerTable.tsx
 import React, { useMemo, useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -8,26 +7,31 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
-import VolunteerDetailModal from './VolunteerDetailModal';
-import type { ListPost } from '../types/volunteer';
-
+import VolunteerDetailModal from './volunteer-detail/VolunteerDetailModal';
+import type { ListPost, PostCategory } from '../../types/volunteer';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
 import 'dayjs/locale/ko';
+import useRegionsCsv from '../../hooks/useRegionsCsv';
 
 type DetailPost = React.ComponentProps<typeof VolunteerDetailModal>['data'];
+const CATEGORY_OPTIONS: PostCategory[] = ['봉사활동 모집', '구호물품 지원'] as const;
+const toISODate = (d: Dayjs | null) => (d ? d.format('YYYY-MM-DD') : '');
 
-// 목록 행 → 상세 모달에 넣을 최소 데이터 매핑
 function toDetailData(p: ListPost): DetailPost {
+  const { province, city } = parseRegion(p.location.split(' ')[0], p.location.split(' ')[1] || '');
   return {
     id: p.id,
     title: p.title,
     content: '',
     category: p.category,
     status: p.status,
-    totalCapacity: Number((p as any).totalCapacity ?? 0),
+    totalCapacity: Number(p.totalCapacity ?? 0),
+    appliedCount: Number(p.appliedCount ?? 0),
+    province: province,
+    city: city || null,
     location: p.location,
     placeName: '',
     latitude: 0,
@@ -41,7 +45,13 @@ function toDetailData(p: ListPost): DetailPost {
     attendanceRadius: 0,
   };
 }
-
+export function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
+  let province = region1;
+  let city: string | null = region2;
+  if (region1.includes('세종')) city = '';
+  else if (region2.endsWith('군')) city = region2;
+  return { province, city };
+}
 type VolunteerTableProps = {
   rows: ListPost[];
   onRowClick?: (id: number) => void;
@@ -53,23 +63,10 @@ type VolunteerTableProps = {
     volunteerFrom?: string;
     volunteerTo?: string;
   }) => void;
-
-  // 하단 컨트롤
-  page?: number;               // 0-based
+  page?: number;
   size?: number;
   onSizeChange?: (size: number) => void;
 };
-
-const toISODate = (d: Dayjs | null) => (d ? d.format('YYYY-MM-DD') : '');
-
-// "서울특별시 강남구" → { province: "서울특별시", city: "강남구" }
-function parseLocation(loc?: string) {
-  if (!loc) return { province: '', city: '' };
-  const parts = loc.trim().split(/\s+/);
-  const province = parts[0] ?? '';
-  const city = parts.slice(1).join(' ') || '';
-  return { province, city };
-}
 
 export default function VolunteerTable({
   rows,
@@ -82,9 +79,10 @@ export default function VolunteerTable({
   const [selectedPost, setSelectedPost] = useState<DetailPost | null>(null);
   const [open, setOpen] = useState(false);
 
-  // ── 상단 필터 상태(조회 버튼 눌렀을 때만 서버로 전달) ──
-  const [provinceFilter, setProvinceFilter] = useState<string>(''); // 시/도
-  const [cityFilter, setCityFilter] = useState<string>('');         // 시·군·구
+  const { provinces, citiesByProvince, loading: regionLoading, error: regionError } = useRegionsCsv('/regions.csv');
+
+  const [provinceFilter, setProvinceFilter] = useState<string>('');
+  const [cityFilter, setCityFilter] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [volStart, setVolStart] = useState<Dayjs | null>(null);
@@ -92,34 +90,10 @@ export default function VolunteerTable({
   const [volFrom, setVolFrom] = useState<string>('');
   const [volTo, setVolTo] = useState<string>('');
 
-  // ── 지역 옵션 생성 (rows 기준) ──
-  const regionData = useMemo(
-    () => rows.map(r => parseLocation(r.location)),
-    [rows]
-  );
-
-  const provinceOptions = useMemo(
-    () => Array.from(new Set(regionData.map(r => r.province))).filter(Boolean),
-    [regionData]
-  );
-
-  const cityOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          regionData
-            .filter(r => !provinceFilter || r.province === provinceFilter)
-            .map(r => r.city)
-            .filter(Boolean)
-        )
-      ),
-    [regionData, provinceFilter]
-  );
-
-  const categoryOptions = useMemo(
-    () => Array.from(new Set(rows.map(r => r.category))),
-    [rows]
-  );
+  const cityOptions = useMemo(() => {
+    if (!provinceFilter) return [];
+    return citiesByProvince[provinceFilter] ?? [];
+  }, [citiesByProvince, provinceFilter]);
 
   const handleOpen = (post: ListPost) => {
     if (onRowClick) { onRowClick(post.id); return; }
@@ -135,17 +109,13 @@ export default function VolunteerTable({
     setVolFrom(''); setVolTo('');
   };
 
-  // 표시 개수 변경
   const handleSizeSelect = (e: SelectChangeEvent<string>) => {
     const n = parseInt(e.target.value, 10) || 20;
     onSizeChange?.(n);
   };
 
   const LabelRow: React.FC<{
-    label: string;
-    children: React.ReactNode;
-    stretch?: boolean;
-    minWidth?: number;
+    label: string; children: React.ReactNode; stretch?: boolean; minWidth?: number;
   }> = ({ label, children, stretch = true, minWidth = 420 }) => (
     <Stack direction="row" alignItems="center" spacing={2.5} sx={{ minWidth: { xs: '100%', md: minWidth } }}>
       <Typography variant="body2" sx={{ width: 84, color: 'text.primary', fontWeight: 600, textAlign: 'right' }}>
@@ -157,63 +127,43 @@ export default function VolunteerTable({
 
   return (
     <>
-      {/* ── 필터 영역 ── */}
       <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }} elevation={0}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={2}
-          alignItems={{ xs: 'stretch', md: 'center' }}
-          useFlexGap
-          flexWrap="wrap"
-        >
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ xs: 'stretch', md: 'center' }} useFlexGap flexWrap="wrap">
           <LabelRow label="봉사 지역">
             <Stack direction="row" spacing={1.25}>
-              {/* 시/도 */}
               <Autocomplete
-                size="small"
-                sx={{ minWidth: 160 }}
-                options={provinceOptions}
-                value={provinceFilter || null}
+                size="small" sx={{ minWidth: 160 }} options={provinces}
+                loading={regionLoading} value={provinceFilter || null}
                 onChange={(_, v) => { setProvinceFilter(v ?? ''); setCityFilter(''); }}
-                renderInput={(params) => <TextField {...params} placeholder="시/도" />}
-                clearOnEscape
+                renderInput={(p) => <TextField {...p} placeholder="시/도" />} clearOnEscape
               />
-              {/* 시·군·구 */}
               <Autocomplete
-                size="small"
-                sx={{ minWidth: 160 }}
-                options={cityOptions}
-                value={cityFilter || null}
+                size="small" sx={{ minWidth: 160 }} options={cityOptions}
+                loading={regionLoading} value={cityFilter || null}
                 onChange={(_, v) => setCityFilter(v ?? '')}
-                renderInput={(params) => <TextField {...params} placeholder="시/군/구" />}
-                disabled={!provinceFilter}
+                renderInput={(p) => <TextField {...p} placeholder="시/군/구" />}
+                disabled={!provinceFilter || (citiesByProvince[provinceFilter]?.length ?? 0) === 0}
                 clearOnEscape
               />
             </Stack>
+            {regionError && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
+                지역 목록을 불러오지 못했습니다: {regionError}
+              </Typography>
+            )}
           </LabelRow>
 
           <LabelRow label="상태" minWidth={360} stretch={false}>
             <ToggleButtonGroup
-              size="small"
-              exclusive
-              value={statusFilter || ''}
-              onChange={(_, v) => setStatusFilter(v ?? '')}
-              color="standard"
+              size="small" exclusive value={statusFilter || ''} onChange={(_, v) => setStatusFilter(v ?? '')} color="standard"
               sx={{
                 columnGap: 1.3,
                 '& .MuiToggleButton-root': {
-                  px: 1.7,
-                  textTransform: 'none',
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  color: 'text.primary',
-                  backgroundColor: '#fff',
+                  px: 1.7, textTransform: 'none', borderRadius: 999, border: '1px solid', borderColor: 'divider',
+                  color: 'text.primary', backgroundColor: '#fff',
                 },
                 '& .MuiToggleButton-root.Mui-selected, & .MuiToggleButton-root.Mui-selected:hover': {
-                  color: '#ff7c33',
-                  borderColor: '#ff7c33',
-                  backgroundColor: '#fff',
+                  color: '#ff7c33', borderColor: '#ff7c33', backgroundColor: '#fff',
                 },
               }}
             >
@@ -226,13 +176,10 @@ export default function VolunteerTable({
 
           <LabelRow label="봉사 유형" stretch={false} minWidth={260}>
             <Autocomplete
-              size="small"
-              sx={{ width: 200 }}
-              options={categoryOptions}
-              value={categoryFilter || null}
-              onChange={(_, v) => setCategoryFilter(v ?? '')}
-              renderInput={(params) => <TextField {...params} placeholder="유형 선택" />}
-              clearOnEscape
+              size="small" sx={{ width: 200 }} options={CATEGORY_OPTIONS as readonly PostCategory[]}
+              value={(categoryFilter as PostCategory) || null}
+              onChange={(_, v) => setCategoryFilter((v as PostCategory) ?? '')}
+              renderInput={(p) => <TextField {...p} placeholder="유형 선택" />} clearOnEscape
             />
           </LabelRow>
 
@@ -243,18 +190,14 @@ export default function VolunteerTable({
                   value={volStart}
                   onChange={(v) => { setVolStart(v); setVolFrom(toISODate(v)); }}
                   format="YYYY/MM/DD"
-                  slotProps={{
-                    textField: { size: 'small', placeholder: '시작일', sx: { minWidth: 160 } },
-                  }}
+                  slotProps={{ textField: { size: 'small', placeholder: '시작일', sx: { minWidth: 160 } } }}
                 />
                 <Box sx={{ px: 1, color: 'text.secondary', userSelect: 'none' }}>~</Box>
                 <DatePicker
                   value={volEnd}
                   onChange={(v) => { setVolEnd(v); setVolTo(toISODate(v)); }}
                   format="YYYY/MM/DD"
-                  slotProps={{
-                    textField: { size: 'small', placeholder: '종료일', sx: { minWidth: 160 } },
-                  }}
+                  slotProps={{ textField: { size: 'small', placeholder: '종료일', sx: { minWidth: 160 } } }}
                 />
               </Stack>
             </LocalizationProvider>
@@ -262,16 +205,13 @@ export default function VolunteerTable({
 
           <Box sx={{ flex: 1 }} />
           <Stack direction="row" spacing={1} sx={{ ml: 'auto' }}>
-            <Button variant="text" color="inherit" startIcon={<RestartAltIcon />} onClick={resetFilters}>
-              초기화
-            </Button>
+            <Button variant="text" color="inherit" startIcon={<RestartAltIcon />} onClick={resetFilters}>초기화</Button>
             <Button
-              variant="contained"
-              startIcon={<SearchIcon />}
+              variant="contained" startIcon={<SearchIcon />}
               onClick={() =>
                 onSearch?.({
-                  province: provinceFilter || undefined, // 시/도
-                  city: cityFilter || undefined,         // 시·군·구
+                  province: provinceFilter || undefined,
+                  city: cityFilter || undefined,
                   status: statusFilter || undefined,
                   category: categoryFilter || undefined,
                   volunteerFrom: volFrom || undefined,
@@ -285,12 +225,8 @@ export default function VolunteerTable({
         </Stack>
       </Paper>
 
-      {/* 필터 아래 · 테이블 위 컨트롤 */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-        <Typography variant="body2" color="text.secondary">
-          페이지 {page + 1}
-        </Typography>
-
+        <Typography variant="body2" color="text.secondary">페이지 {page + 1}</Typography>
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="body2" color="text.secondary">표시 개수</Typography>
           <Select size="small" value={String(size)} onChange={handleSizeSelect} sx={{ minWidth: 88 }}>
@@ -302,7 +238,6 @@ export default function VolunteerTable({
         </Stack>
       </Stack>
 
-      {/* 테이블 */}
       <TableContainer component={Paper}>
         <Table>
           <TableHead sx={{ backgroundColor: '#ff7c33' }}>
@@ -326,9 +261,7 @@ export default function VolunteerTable({
                 <TableCell align="center">{post.location}</TableCell>
                 <TableCell align="center">{post.category}</TableCell>
                 <TableCell align="center">
-                  {(post as any).appliedCount != null
-                    ? `${(post as any).appliedCount} / ${(post as any).capacity ?? (post as any).totalCapacity}`
-                    : (post as any).totalCapacity}
+                  {post.appliedCount ?? 0} / {post.totalCapacity}
                 </TableCell>
                 <TableCell align="center">
                   {post.recruitmentStartDate} ~ {post.recruitmentEndDate}
@@ -350,7 +283,6 @@ export default function VolunteerTable({
         </Table>
       </TableContainer>
 
-      {/* 내부 모달 (외부 onRowClick 미사용 시에만) */}
       {!onRowClick && selectedPost && (
         <VolunteerDetailModal open={open} onClose={handleClose} data={selectedPost} />
       )}

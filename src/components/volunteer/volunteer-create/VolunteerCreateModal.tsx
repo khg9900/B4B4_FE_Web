@@ -1,7 +1,7 @@
-import AppDialog from './AppDialog';
+import AppDialog from '../../AppDialog';
 import VolunteerForm from './VolunteerForm';
-import { createVolunteerPost as realCreate } from '../api/volunteerPosts';
-import type { CreatePostRequest } from '../types/volunteer';
+import { createVolunteerPost as realCreate } from '../../../api/volunteerPosts';
+import type { CreatePostRequest } from '../../../types/volunteer';
 
 type Props = {
   open: boolean;

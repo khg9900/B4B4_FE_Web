@@ -1,13 +1,12 @@
 // src/pages/VolunteerPosts.tsx
 import { useEffect, useState, useCallback } from 'react';
 import { Box, Button, Typography, Stack } from '@mui/material';
-import Topbar from '../components/Topbar';
-import VolunteerTable from '../components/VolunteerTable';
-import VolunteerDetailModal from '../components/VolunteerDetailModal';
-import VolunteerCreateModal from '../components/VolunteerCreateModal';
-import {fetchMyPosts, fetchPostDetail, updateVolunteerPost, deleteVolunteerPost, } from '../api/volunteerPosts';
-import { toListPostFromMy } from '../adapters/volunteer';
-import type { ListPost, DetailPost, MyPostQuery, PostStatusEN, PostCategoryEN } from '../types/volunteer';
+import Topbar from '../../components/Topbar';
+import VolunteerTable from '../../components/volunteer/VolunteerTable';
+import VolunteerDetailModal from '../../components/volunteer/volunteer-detail/VolunteerDetailModal';
+import VolunteerCreateModal from '../../components/volunteer/volunteer-create/VolunteerCreateModal';
+import {fetchMyPosts, fetchPostDetail, updateVolunteerPost, deleteVolunteerPost, } from '../../api/volunteerPosts';
+import type { ListPost, DetailPost, MyPostQuery, PostStatusEN, PostCategoryEN } from '../../types/volunteer';
 
 const STATUS_KO_TO_EN: Record<'모집 중' | '모집 마감' | '봉사 완료', PostStatusEN> = {
   '모집 중': 'OPEN',
@@ -42,7 +41,7 @@ export default function Post() {
     setLoading(true);
     try {
       const slice = await fetchMyPosts(query); // { content, page, size, hasNext }
-      setRows(slice.content.map(toListPostFromMy));
+      setRows(slice.content);
       setPage(slice.page);
       setSize(slice.size);
       setHasNext(slice.hasNext);

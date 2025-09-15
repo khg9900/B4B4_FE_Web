@@ -3,11 +3,11 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Box, CssBaseline, Grid, Paper, Typography, Stack, Button,
 } from '@mui/material';
-import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
-import { getMyInfoCached } from '../api/user';
-import { fetchTodayReportStats, type TodayStats } from '../api/reports';
-import { getClaims } from '../auth/tokenStore';
+import Sidebar from '../../components/report/Sidebar';
+import Topbar from '../../components/Topbar';
+import { getMyInfoCached } from '../../api/user';
+import { fetchTodayReportStats, type TodayStats } from '../../api/reports';
+import { getClaims } from '../../auth/tokenStore';
 
 const ORANGE = '#ff7c33';
 const BLUE   = '#2196f3';
@@ -113,7 +113,7 @@ export default function DisasterHomePage() {
           >
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                오늘 접수 현황
+                당일 접수 현황
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {todayLabel} · {locationLabel} 기준
