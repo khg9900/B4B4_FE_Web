@@ -1,5 +1,4 @@
 // src/pages/Login.tsx
-
 import React, { useEffect, useState } from 'react';
 import {
   Box, Paper, Typography, TextField, Button, Checkbox, FormControlLabel,
@@ -7,6 +6,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { api } from '../../api/http';
+import { getMyInfoCached } from '../../api/user';
 import { saveTokens, getAccessToken, getCurrentRole, type UserRole } from '../../auth/tokenStore';
 import { registerDeviceAfterLogin } from '../../lib/fcm';
 
@@ -58,6 +58,7 @@ export default function Login() {
 
     setSubmitting(true);
     try {
+      // 1. 로그인 API 호출
       const res = await api.post('/auth/login', { email, password });
       const payload = res.data?.payload ?? res.data;
       const accessToken: string | undefined = payload?.accessToken;
@@ -65,20 +66,25 @@ export default function Login() {
 
       if (!accessToken) throw new Error('토큰이 응답에 없습니다.');
 
-      // ✅ 기존 localStorage 초기화
+      // 2. 기존 localStorage 초기화
       localStorage.clear();
 
-      // ✅ 토큰 다시 저장
+      // 3. 토큰 저장
       saveTokens(accessToken, refreshToken);
 
-      // ✅ 아이디 저장 옵션 처리
+      // 4. 아이디 저장 옵션 처리
       if (remember) {
         localStorage.setItem('savedId', email);
       }
 
-      // ✅ 기기 등록
-      void registerDeviceAfterLogin();
+      // 5. FCM 기기 등록
+      await registerDeviceAfterLogin();
 
+      // 6. 유저 정보 캐시 조회 및 저장
+      // force: true → 반드시 서버에서 새로 받아 로컬/메모리 캐시 업데이트
+      await getMyInfoCached({ force: true });
+
+      // 7. 리다이렉트
       const role = getCurrentRole();
       let target = preferredLanding(role);
 
