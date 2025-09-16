@@ -9,7 +9,7 @@ import {
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
 import type { SelectChangeEvent } from '@mui/material';
 import AppDialog from './AppDialog';
-import LocationPicker from './LocationPicker';
+import LocationPicker from '../components/volunteer/LocationPicker';
 import type { DetailPost, PostStatus, TeamStatus } from '../types/volunteer';
 import { fetchPostTeams, fetchTeamParticipants, updateParticipantAttendance } from '../api/volunteerPosts';
 
@@ -249,14 +249,14 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
               placeName={edited.placeName ?? ''}
               latitude={String(edited.latitude ?? '')}
               longitude={String(edited.longitude ?? '')}
-              setProvince={(v) =>
+              setProvince={(v: any) =>
                 setEdited((prev) => {
                   const parts = (prev.location ?? '').split(' ');
                   const cityPart = parts.slice(1).join(' ');
                   return { ...prev, location: `${v} ${cityPart}`.trim() };
                 })
               }
-              setCity={(v) =>
+              setCity={(v: string | null) =>
                 setEdited((prev) => {
                   const parts = (prev.location ?? '').split(' ');
                   const provincePart = parts[0] ?? '';
@@ -264,9 +264,9 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
                   return { ...prev, location: `${provincePart} ${safeCity}`.trim() };
                 })
               }
-              setPlaceName={(v) => setEdited(prev => ({ ...prev, placeName: v }))}
-              setLatitude={(v) => setEdited(prev => ({ ...prev, latitude: parseFloat(v) }))}
-              setLongitude={(v) => setEdited(prev => ({ ...prev, longitude: parseFloat(v) }))}
+              setPlaceName={(v: any) => setEdited(prev => ({ ...prev, placeName: v }))}
+              setLatitude={(v: string) => setEdited(prev => ({ ...prev, latitude: parseFloat(v) }))}
+              setLongitude={(v: string) => setEdited(prev => ({ ...prev, longitude: parseFloat(v) }))}
               modalOpen={locationModalOpen}
             />
 

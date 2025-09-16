@@ -4,7 +4,7 @@ type Props = {
   attendanceStartTime?: string;
   attendanceEndTime?: string;
   attendanceRadius?: number;
-  onChange: (e: any) => void;
+  onChange?: (e: any) => void;
   errors?: {
     startTime?: string;
     endTime?: string;
@@ -19,6 +19,8 @@ export default function AttendanceSection({
   onChange,
   errors,
 }: Props) {
+
+  const readOnly = !onChange
   return (
     <>
       <Typography variant="h6" sx={{ mt: 1 }}>출석 정책</Typography>
@@ -32,9 +34,11 @@ export default function AttendanceSection({
             name="attendanceStartTime"
             value={attendanceStartTime ?? ''}
             onChange={onChange}
+            disabled={readOnly} // 읽기 전용 처리
             InputLabelProps={{ shrink: true }}
             error={!!errors?.startTime}
             helperText={errors?.startTime}
+            InputProps={{ readOnly }}
           />
         </Box>
         <Box flex={1}>
@@ -45,7 +49,9 @@ export default function AttendanceSection({
             name="attendanceEndTime"
             value={attendanceEndTime ?? ''}
             onChange={onChange}
+            disabled={readOnly} // 읽기 전용 처리
             InputLabelProps={{ shrink: true }}
+            InputProps={{ readOnly }}
             error={!!errors?.endTime}
             helperText={errors?.endTime}
           />
@@ -56,12 +62,15 @@ export default function AttendanceSection({
         <TextField
           fullWidth
           type="number"
-          inputProps={{ min: 0 }}
+          inputProps={{ min: 0, readOnly }}
           label="출석 인정 반경"
           name="attendanceRadius"
           value={attendanceRadius ?? 0}
           onChange={onChange}
-          InputProps={{ endAdornment: <InputAdornment position="end">m</InputAdornment> }}
+          disabled={readOnly} // 읽기 전용 처리
+          InputProps={{
+            endAdornment: <InputAdornment position="end">m</InputAdornment>,
+          }}
           error={!!errors?.radius}
           helperText={errors?.radius}
         />
