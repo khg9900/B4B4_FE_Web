@@ -65,11 +65,18 @@ export default function Login() {
 
       if (!accessToken) throw new Error('토큰이 응답에 없습니다.');
 
+      // ✅ 기존 localStorage 초기화
+      localStorage.clear();
+
+      // ✅ 토큰 다시 저장
       saveTokens(accessToken, refreshToken);
 
-      if (remember) localStorage.setItem('savedId', email);
-      else localStorage.removeItem('savedId');
+      // ✅ 아이디 저장 옵션 처리
+      if (remember) {
+        localStorage.setItem('savedId', email);
+      }
 
+      // ✅ 기기 등록
       void registerDeviceAfterLogin();
 
       const role = getCurrentRole();

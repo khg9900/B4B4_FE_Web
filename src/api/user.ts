@@ -25,7 +25,7 @@ export async function fetchMyInfo(): Promise<MyInfo> {
 }
 
 /* ── 캐시 ─────────────────────────────────── */
-const LS_KEY = 'me:v1';
+const LS_KEY = 'my-info';
 const STALE_MS = 1000 * 60 * 30; // 30분(원하면 늘리거나 0으로 꺼도 됨)
 
 let mem: { data: MyInfo; at: number } | null = null;
