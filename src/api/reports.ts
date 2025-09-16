@@ -1,10 +1,10 @@
-// src/api/reports.ts
 import { api } from './http';
 import { toReport, toSlice } from '../adapters/report';
 import type { ReportDto, ReportStatusEN, SliceResponse } from '../types/report';
 
 const REPORT_BASE = '/reports';
 
+/** 슬라이스 조회 (페이지/상태/지역별) */
 /** 슬라이스 조회 (페이지/상태/지역별) */
 export async function fetchReportsSlice(params: {
   si: string;
@@ -34,7 +34,6 @@ export type TodayStats = {
   received: number;
   closed: number;
 };
-
 export async function fetchTodayReportStats(): Promise<TodayStats> {
   const res = await api.get(`${REPORT_BASE}/today`);
   const p = res.data?.payload ?? res.data ?? {};

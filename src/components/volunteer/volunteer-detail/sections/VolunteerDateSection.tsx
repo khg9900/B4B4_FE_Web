@@ -4,7 +4,7 @@ type Props = {
   volunteerDate?: string;
   startTime?: string;
   endTime?: string;
-  onChange: (e: any) => void;
+  onChange?: (e: any) => void; // optional
   errors?: {
     volunteerDate?: string;
     startTime?: string;
@@ -13,6 +13,8 @@ type Props = {
 };
 
 export default function VolunteerDateSection({ volunteerDate, startTime, endTime, onChange, errors }: Props) {
+  const readOnly = !onChange; // onChange 없으면 읽기 전용
+
   return (
     <>
       <TextField
@@ -22,8 +24,9 @@ export default function VolunteerDateSection({ volunteerDate, startTime, endTime
         name="volunteerDate"
         value={volunteerDate ?? ''}
         onChange={onChange}
+        disabled={readOnly}
         InputLabelProps={{ shrink: true }}
-        inputProps={{ min: new Date().toISOString().split('T')[0] }} // 오늘 날짜 이후만 선택 가능
+        inputProps={{ min: new Date().toISOString().split('T')[0], readOnly }}
         error={!!errors?.volunteerDate}
         helperText={errors?.volunteerDate}
       />
@@ -36,7 +39,9 @@ export default function VolunteerDateSection({ volunteerDate, startTime, endTime
             name="volunteerStartTime"
             value={startTime ?? ''}
             onChange={onChange}
+            disabled={readOnly}
             InputLabelProps={{ shrink: true }}
+            InputProps={{ readOnly }}
             error={!!errors?.startTime}
             helperText={errors?.startTime}
           />
@@ -49,7 +54,9 @@ export default function VolunteerDateSection({ volunteerDate, startTime, endTime
             name="volunteerEndTime"
             value={endTime ?? ''}
             onChange={onChange}
+            disabled={readOnly}
             InputLabelProps={{ shrink: true }}
+            InputProps={{ readOnly }}
             error={!!errors?.endTime}
             helperText={errors?.endTime}
           />
