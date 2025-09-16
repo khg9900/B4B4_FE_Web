@@ -38,6 +38,9 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
     return null;
   }, [data]);
 
+  // DB 기준 봉사 완료 여부
+  const isCompleted = data.status === '봉사 완료';
+
   useEffect(() => {
     if (open) setEdited(data);
   }, [open, data]);
@@ -53,7 +56,7 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
         if (!ignore) setTeams(t);
       } catch (e) {
         console.error('팀 조회 실패', e);
-        if (!ignore) setTeams([]);
+        if (!ignore) setTeams([]); 
       } finally {
         if (!ignore) setTeamsLoading(false);
       }
@@ -63,50 +66,20 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
   }, [open, postId]);
 
   // ---------------------------
-  // 글 단위 수정 제한 (팀원은 별도)
+  // 글 단위 수정 처리
   // ---------------------------
-  const validateField = (_field: keyof DetailPost, _value: string): boolean => {
-    const postFields: (keyof DetailPost)[] = [
-      'title','content','volunteerDate','volunteerStartTime','volunteerEndTime',
-      'recruitmentStartDate','recruitmentEndDate','province','city','placeName',
-      'latitude','longitude','totalCapacity','teamCount','attendanceStartTime',
-      'attendanceEndTime','attendanceRadius'
-    ];
-
-    // 글 상태가 봉사 완료이면 필드 수정 불가
-    if (_field !== 'status' && edited.status === '봉사 완료' && postFields.includes(_field)) {
-      alert('⚠️ 봉사 완료 상태인 글은 수정할 수 없습니다.');
-      return false;
-    }
-
-    // 글 상태 변경(status)도 봉사 완료면 막기
-    if (_field === 'status' && edited.status === '봉사 완료') {
-      alert('⚠️ 봉사 완료 상태인 글은 상태를 변경할 수 없습니다.');
-      return false;
-    }
-
-    // 시작 시간 관련 필드: 봉사 시작/출석 시작 중 작은 시간 기준, 5분 전 이후 수정 불가
-    const startFields: (keyof DetailPost)[] = ['volunteerDate','volunteerStartTime','attendanceStartTime','status'];
-    if (!startFields.includes(_field)) {
-      const volunteerStart = new Date(`${edited.volunteerDate}T${edited.volunteerStartTime}`);
-      const attendanceStart = edited.attendanceStartTime
-        ? new Date(`${edited.volunteerDate}T${edited.attendanceStartTime}`)
-        : volunteerStart;
-      const minStart = new Date(Math.min(volunteerStart.getTime(), attendanceStart.getTime()));
-      const now = new Date();
-      if (now.getTime() + 5*60*1000 > minStart.getTime()) {
-        alert('⚠️ 봉사 시작 5분 전 이후에는 수정할 수 없습니다.');
-        return false;
-      }
-    }
-
-    return true;
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any) => {
     const { name, value } = e.target;
     if (!name) return;
-    if (!validateField(name as keyof DetailPost, value)) return;
+
+    // DB 기준 이미 완료면 수정 자체 불가
+    if (isCompleted) return;
+
+    // DB는 완료 아님 + 프론트에서 status=완료 선택 → 알림만
+    if (name === 'status' && value === '봉사 완료' && edited.status !== '봉사 완료') {
+      alert('⚠️ 봉사 완료 버튼을 누르면 더 이상 수정할 수 없습니다.');
+    }
+
     setEdited(prev => ({ ...prev, [name]: value }));
   };
 
@@ -184,7 +157,7 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
   // -----------------------
   const fieldErrors = getFieldErrors();
   const isAlerted = Object.keys(alerts).length > 0;
-  const isSubmitDisabled = Object.keys(fieldErrors).length > 0 || isAlerted;
+  const isSubmitDisabled = Object.keys(fieldErrors).length > 0 || isAlerted || isCompleted; // DB 기준만 사용
 
   // ---------------------------
   // 팀/참가자 관리
@@ -208,7 +181,7 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
   };
 
   const setAttendance = async (teamId:number,p:Participant,nextStatus:'PRESENT'|'ABSENT')=>{
-    if(p.status==='BLACKLISTED'){ alert('블랙리스트는 상태 변경이 불가합니다.'); return; }
+    if (p.status==='BLACKLISTED') return; 
     try{
       setMemberSaving(prev=>({...prev,[p.participantId]:true}));
       await updateParticipantAttendance(postId!,teamId,p.participantId,{status:nextStatus});
@@ -219,7 +192,6 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
       });
     }catch(e){
       console.error('출석 상태 변경 실패', e);
-      alert('상태 변경에 실패했습니다.');
     }finally{
       setMemberSaving(prev=>({...prev,[p.participantId]:false}));
     }
@@ -235,12 +207,12 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
     saving,
     setSaving,
     handleChange,
-    validateField,
     getFieldErrors,
     getAlerts,
     alerts,
     isAlerted,
     isSubmitDisabled,
+    isCompleted,
     teams,
     teamsLoading,
     expandedTeams,

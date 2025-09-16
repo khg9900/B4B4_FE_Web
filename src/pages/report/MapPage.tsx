@@ -1,4 +1,3 @@
-// src/pages/MapPage.tsx
 import { useEffect, useMemo, useState } from 'react';
 import { Box, CssBaseline, Typography, Stack } from '@mui/material';
 import Sidebar from '../../components/report/Sidebar';
@@ -30,7 +29,7 @@ export default function MapPage() {
   }, []);
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#ffffff' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#fff' }}>
       <CssBaseline />
       <Sidebar />
       <Box component="main" sx={{ flexGrow: 1 }}>

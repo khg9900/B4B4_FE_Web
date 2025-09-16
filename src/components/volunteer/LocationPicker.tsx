@@ -15,8 +15,6 @@ type Props = {
   setLongitude: (v: string) => void;
   modalOpen: boolean;
 };
-
-
 // coord2regioncode SDK 결과 기반 특수 처리
 export function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
   let province = region1;
@@ -46,6 +44,7 @@ export default function LocationPicker({
       const lng = longitude ? parseFloat(longitude) : 126.978;
       const center = new kakao.maps.LatLng(lat, lng);
       map = new kakao.maps.Map(mapRef.current, { center, level: 4 });
+
       markerRef.current = new kakao.maps.Marker({ map, position: center });
 
       // 지도 클릭

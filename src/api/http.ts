@@ -48,6 +48,7 @@ async function reissue(): Promise<string> {
     throw new Error('no access token in reissue response');
   }
 
+  if (!newAT) throw new Error('no access token in reissue response');
   saveTokens(newAT, newRT);
 
   console.log('[Auth] Reissue success', {

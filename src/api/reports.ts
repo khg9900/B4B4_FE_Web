@@ -1,10 +1,10 @@
-// src/api/reports.ts
 import { api } from './http';
 import { toReport, toSlice } from '../adapters/report';
 import type { ReportDto, ReportStatusEN, SliceResponse } from '../types/report';
 
 const REPORT_BASE = '/reports';
 
+/** 슬라이스 조회 (페이지/상태/지역별) */
 /** 슬라이스 조회 (페이지/상태/지역별) */
 export async function fetchReportsSlice(params: {
   si: string;
@@ -34,7 +34,6 @@ export type TodayStats = {
   received: number;
   closed: number;
 };
-
 export async function fetchTodayReportStats(): Promise<TodayStats> {
   const res = await api.get(`${REPORT_BASE}/today`);
   const p = res.data?.payload ?? res.data ?? {};
@@ -55,14 +54,14 @@ export type DisasterMarker = {
 };
 
 export const disasterColors: Record<string, string> = {
-  EARTHQUAKE: 'red',
-  FLOOD: 'blue',
-  TYPHOON: 'orange',
-  WILDFIRE: 'darkred',
-  LANDSLIDE: 'brown',
-  POWER_OUTAGE: 'gray',
-  TERROR_ATTACK: 'black',
-  BUILDING_COLLAPSE: 'purple',
+  EARTHQUAKE: '#FF3B30',
+  FLOOD: '#007AFF',
+  TYPHOON: '#FF9500',
+  WILDFIRE: '#C21807',
+  LANDSLIDE: '#8B4513',
+  POWER_OUTAGE: '#8E8E93',
+  TERROR_ATTACK: '#000000',
+  BUILDING_COLLAPSE: '#6A5ACD',
 };
 
 /** 위치 기반 마커 조회 */

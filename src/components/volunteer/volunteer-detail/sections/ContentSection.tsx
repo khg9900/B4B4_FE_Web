@@ -3,7 +3,7 @@ import { TextField } from '@mui/material';
 
 type Props = {
   content?: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 export default function ContentSection({ content, onChange }: Props) {
@@ -17,6 +17,8 @@ export default function ContentSection({ content, onChange }: Props) {
       value={content ?? ''}
       onChange={onChange}
       placeholder="봉사 내용, 준비물, 유의사항 등을 입력하세요."
+      disabled={!onChange} // onChange가 없으면 읽기 전용
     />
   );
 }
+

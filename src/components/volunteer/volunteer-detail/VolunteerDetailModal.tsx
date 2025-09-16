@@ -34,15 +34,29 @@ type Props = {
 
 export default function VolunteerDetailModal({ open, onClose, data, onSave, onDelete }: Props) {
   const {
-    edited, setEdited, saving, handleChange,
-    getFieldErrors, alerts, isAlerted, isSubmitDisabled,
-    teams, teamsLoading, expandedTeams, toggleTeam,
-    teamMembers, teamLoading, memberExpanded, toggleMember,
-    memberSaving, setAttendance,
+    edited,
+    setEdited,
+    saving,
+    handleChange,
+    getFieldErrors,
+    alerts,
+    isAlerted,
+    isSubmitDisabled,
+    teams,
+    teamsLoading,
+    expandedTeams,
+    toggleTeam,
+    teamMembers,
+    teamLoading,
+    memberExpanded,
+    toggleMember,
+    memberSaving,
+    setAttendance,
   } = useVolunteerDetail(data, open);
 
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const isCompleted = data.status === '봉사 완료';
 
   const handleSave = async () => {
     const fieldErrors = getFieldErrors();
@@ -73,7 +87,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
     }
 
     if (!onDelete) {
-      // 심플한 동작: API 미제공 시 안내만 띄움
       alert('삭제 기능이 제공되지 않습니다.');
       setConfirmOpen(false);
       return;
@@ -102,7 +115,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
         maxWidth="md"
         actions={
           <>
-            {/* 삭제 버튼 (항상 노출) */}
             <Button
               variant="outlined"
               color="primary"
@@ -121,7 +133,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
             <Button
               onClick={handleSave}
               variant="contained"
-              disabled={saving || isSubmitDisabled || deleting}
+              disabled={saving || deleting || isSubmitDisabled || isCompleted} // DB 기준
               sx={{ bgcolor: '#ff7c33', ':hover': { bgcolor: '#ff6a14' } }}
               startIcon={saving ? <CircularProgress size={18} color="inherit" /> : undefined}
             >
@@ -130,7 +142,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
           </>
         }
       >
-        {/* input[type=date|time] 스타일 적용 */}
         <GlobalStyles
           styles={(theme) => ({
             'input[type="date"], input[type="time"]': {
@@ -149,24 +160,24 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
         <Stack spacing={2.5}>
           <TitleSection
             title={edited.title}
-            onChange={handleChange}
+            onChange={isCompleted ? undefined : handleChange} // DB 기준
           />
 
           <ContentSection
             content={edited.content}
-            onChange={handleChange}
+            onChange={isCompleted ? undefined : handleChange}
           />
 
           <StatusSection
             status={edited.status}
-            onChange={handleChange}
+            onChange={isCompleted ? undefined : handleChange}
           />
 
           <VolunteerDateSection
             volunteerDate={edited.volunteerDate}
             startTime={(edited as any).volunteerStartTime}
             endTime={(edited as any).volunteerEndTime}
-            onChange={handleChange}
+            onChange={isCompleted ? undefined : handleChange}
             errors={{
               startTime: alerts.volunteerStartTime,
               endTime: alerts.volunteerEndTime,
@@ -176,7 +187,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
           <RecruitmentDateSection
             startDate={edited.recruitmentStartDate}
             endDate={edited.recruitmentEndDate}
-            onChange={handleChange}
+            onChange={isCompleted ? undefined : handleChange}
             errors={{
               startDate: alerts.recruitmentStartDate,
               endDate: alerts.recruitmentEndDate,
@@ -186,6 +197,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
           <LocationSection
             edited={edited}
             setEdited={setEdited}
+            isCompleted={isCompleted} // DB 기준
           />
 
           <CapacitySection
@@ -197,7 +209,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
             attendanceStartTime={(edited as any).attendanceStartTime}
             attendanceEndTime={(edited as any).attendanceEndTime}
             attendanceRadius={(edited as any).attendanceRadius}
-            onChange={handleChange}
+            onChange={isCompleted ? undefined : handleChange}
             errors={{
               startTime: alerts.attendanceStartTime,
               endTime: alerts.attendanceEndTime,
@@ -220,7 +232,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
         </Stack>
       </AppDialog>
 
-      {/* 삭제 확인 모달 (MUI Dialog) */}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>게시글 삭제</DialogTitle>
         <DialogContent>
