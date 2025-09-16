@@ -139,7 +139,6 @@ const DisasterMap: React.FC<Props> = ({ height = 420 }) => {
 
   useEffect(() => {
     if (!map) return;
-
     let timer: any;
     const debouncedReload = () => {
       if (timer) clearTimeout(timer);

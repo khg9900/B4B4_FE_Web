@@ -56,8 +56,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
 
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-
-  // ✅ DB 기준으로 봉사 완료 여부 판단
   const isCompleted = data.status === '봉사 완료';
 
   const handleSave = async () => {

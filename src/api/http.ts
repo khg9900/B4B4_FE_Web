@@ -36,13 +36,27 @@ async function reissue(): Promise<string> {
   const rt = getRefreshToken();
   if (!rt) throw new Error('no refresh token');
 
+  console.log('[Auth] Reissuing tokens...');
+
   const resp = await axios.post('/api/auth/reissue', { refreshToken: rt });
   const payload: any = resp.data?.payload ?? resp.data;
   const newAT: string | undefined = payload?.accessToken;
   const newRT: string | undefined = payload?.refreshToken;
 
+  if (!newAT) {
+    console.error('[Auth] Reissue failed: no access token in response');
+    throw new Error('no access token in reissue response');
+  }
+
   if (!newAT) throw new Error('no access token in reissue response');
   saveTokens(newAT, newRT);
+
+  console.log('[Auth] Reissue success', {
+    newAT: newAT.slice(0, 15) + '...',
+    hasNewRT: !!newRT,
+    time: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+  });
+
   return newAT;
 }
 
@@ -65,6 +79,7 @@ async function ensureValidToken(): Promise<string> {
     waiters = [];
     return newAT;
   } catch (e) {
+    console.error('[Auth] Reissue failed', e);
     clearTokens();
     waiters.forEach((cb) => cb(null, e));
     waiters = [];
