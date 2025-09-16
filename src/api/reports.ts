@@ -54,14 +54,14 @@ export type DisasterMarker = {
 };
 
 export const disasterColors: Record<string, string> = {
-  EARTHQUAKE: 'red',
-  FLOOD: 'blue',
-  TYPHOON: 'orange',
-  WILDFIRE: 'darkred',
-  LANDSLIDE: 'brown',
-  POWER_OUTAGE: 'gray',
-  TERROR_ATTACK: 'black',
-  BUILDING_COLLAPSE: 'purple',
+  EARTHQUAKE: '#FF3B30',
+  FLOOD: '#007AFF',
+  TYPHOON: '#FF9500',
+  WILDFIRE: '#C21807',
+  LANDSLIDE: '#8B4513',
+  POWER_OUTAGE: '#8E8E93',
+  TERROR_ATTACK: '#000000',
+  BUILDING_COLLAPSE: '#6A5ACD',
 };
 
 /** 위치 기반 마커 조회 */
