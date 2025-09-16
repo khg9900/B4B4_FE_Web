@@ -1,159 +1,211 @@
 // src/components/DisasterMap.tsx
-import React, { useEffect, useRef, useState } from 'react';
-import { Box } from '@mui/material';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import {
+  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Typography, Chip
+} from '@mui/material';
 import { fetchDisasterMarkers, type DisasterMarker, disasterColors } from '../../api/reports';
 import { loadKakaoMap } from '../../utils/kakaoLoader';
 
-declare global {
-  interface Window { kakao: any; }
-}
+declare global { interface Window { kakao: any; } }
 
-interface Props {
-  height?: number;
-}
+interface Props { height?: number; }
+
+// HEX → rgba 변환
+const hexToRgba = (hex: string, a = 0.35) => {
+  const h = hex.replace('#','');
+  const bigint = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+  const r = (bigint >> 16) & 255, g = (bigint >> 8) & 255, b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+};
 
 const DisasterMap: React.FC<Props> = ({ height = 420 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
+  const overlaysRef = useRef<any[]>([]);
   const [map, setMap] = useState<any>();
-  const [overlays, setOverlays] = useState<any[]>([]);
   const [currentLat, setCurrentLat] = useState(37.5665);
   const [currentLng, setCurrentLng] = useState(126.9780);
+  const [rows, setRows] = useState<DisasterMarker[]>([]);
 
-  // 현재 위치 가져오기
-  const initGeolocation = async () => {
-    return new Promise<void>((resolve) => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setCurrentLat(pos.coords.latitude);
-            setCurrentLng(pos.coords.longitude);
-            if (map) {
-              map.setCenter(new window.kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
-            }
-            resolve();
-          },
-          () => resolve(),
-          { enableHighAccuracy: true }
-        );
-      } else resolve();
+  const initGeolocation = async () =>
+    new Promise<void>((resolve) => {
+      if (!navigator.geolocation) return resolve();
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCurrentLat(pos.coords.latitude);
+          setCurrentLng(pos.coords.longitude);
+          if (map) map.setCenter(new window.kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+          resolve();
+        },
+        () => resolve(),
+        { enableHighAccuracy: true }
+      );
     });
+
+  const clearOverlays = () => {
+    overlaysRef.current.forEach(o => o.setMap(null));
+    overlaysRef.current = [];
   };
 
-  // 마커 로드
-  const loadMarkers = async () => {
+  const loadMarkers = useCallback(async () => {
     if (!map) return;
-
     try {
-      console.log('📡 마커 API 호출:', currentLng, currentLat);
-      const data: DisasterMarker[] = await fetchDisasterMarkers(currentLng, currentLat);
+      const center = map.getCenter();
+      const bounds = map.getBounds();
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
 
-      console.log('📡 API 응답 데이터:', data);
+      const centerLng = center.getLng();
+      const centerLat = center.getLat();
 
-      // 기존 오버레이 제거
-      overlays.forEach(o => o.setMap(null));
-      setOverlays([]);
+      clearOverlays();
+
+      // 서버 시그니처 유지 (longitude, latitude)
+      const data: DisasterMarker[] = await fetchDisasterMarkers(
+        centerLng,
+        centerLat,
+        { swLat: sw.getLat(), swLng: sw.getLng(), neLat: ne.getLat(), neLng: ne.getLng() }
+      );
+
+      const sorted = [...data].sort((a,b) => (b.count - a.count) || a.disasterType.localeCompare(b.disasterType));
+      setRows(sorted);
 
       const newOverlays: any[] = [];
-
       data.forEach(d => {
         const position = new window.kakao.maps.LatLng(d.latitude, d.longitude);
+        const repeat = Math.max(1, Number(d.count ?? 1));
+        for (let i = 0; i < repeat; i++) {
+          const content = document.createElement('div');
+          const size = 32;
+          content.style.width = `${size}px`;
+          content.style.height = `${size}px`;
+          content.style.borderRadius = '50%';
 
-        const content = document.createElement('div');
-        content.style.backgroundColor = disasterColors[d.disasterType] || 'gray';
-        content.style.color = 'white';
-        content.style.padding = '4px 6px';
-        content.style.borderRadius = '50%';
-        content.style.textAlign = 'center';
-        content.style.fontSize = '12px';
-        content.style.fontWeight = 'bold';
-        content.style.minWidth = '24px';
-        content.style.minHeight = '24px';
-        content.innerText = String(d.count);
+          const key = String(d.disasterType ?? '').trim().toUpperCase();
+          const raw = (disasterColors as any)?.[key];
+          let bg: string;
+          if (typeof raw === 'string') {
+            if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(raw)) bg = hexToRgba(raw, 0.35);
+            else if (/^rgba?\(/i.test(raw)) bg = raw;
+            else bg = raw;
+          } else bg = hexToRgba('#808080', 0.35);
+          content.style.background = bg;
 
-        const overlay = new window.kakao.maps.CustomOverlay({
-          position,
-          content,
-          yAnchor: 0.5,
-          xAnchor: 0.5,
-        });
+          content.style.border = '1px solid rgba(0,0,0,0.15)';
+          content.style.boxShadow = '0 0 0 1px rgba(255,255,255,0.6) inset';
+          content.style.pointerEvents = 'auto';
 
-        overlay.setMap(map);
+          const overlay = new window.kakao.maps.CustomOverlay({
+            position, content, yAnchor: 0.5, xAnchor: 0.5, zIndex: 2,
+          });
+          overlay.setMap(map);
 
-        // 클릭 시 정보창 토글
-        const infowindow = new window.kakao.maps.InfoWindow({
-          content: `<div style="padding:5px;">
-                      <strong>${d.disasterType}</strong><br/>
-                      상태: ${d.status}<br/>
-                      건수: ${d.count}
-                    </div>`
-        });
+          const infowindow = new window.kakao.maps.InfoWindow({
+            content: `<div style="padding:5px;">
+                        <strong>${d.disasterType}</strong><br/>상태: ${d.status}<br/>건수: ${d.count}
+                      </div>`
+          });
+          content.addEventListener('click', () => {
+            if (infowindow.getMap()) infowindow.close(); else infowindow.open(map, overlay);
+          });
 
-        content.addEventListener('click', () => {
-          if (infowindow.getMap()) {
-            infowindow.close();
-          } else {
-            infowindow.open(map, overlay);
-          }
-        });
-
-        newOverlays.push(overlay);
-        console.log('📍 마커 생성:', d);
+          newOverlays.push(overlay);
+        }
       });
 
-      setOverlays(newOverlays);
-      console.log('✅ 오버레이 세팅 완료:', newOverlays.length);
-
+      overlaysRef.current = newOverlays;
     } catch (err) {
       console.error('🔥 마커 로딩 실패:', err);
+      clearOverlays();
+      setRows([]);
     }
-  };
+  }, [map]);
 
   useEffect(() => {
-    const initMap = async () => {
-      console.log('🗺️ initMap useEffect 호출');
+    (async () => {
       try {
         await loadKakaoMap();
         if (!mapContainer.current) return;
-
         const mapInstance = new window.kakao.maps.Map(mapContainer.current, {
           center: new window.kakao.maps.LatLng(currentLat, currentLng),
-          level: 7
+          level: 7,
         });
         setMap(mapInstance);
-        console.log('✅ Kakao Map 로딩 완료');
       } catch (e) {
         console.error('카카오 지도 로딩 실패', e);
       }
-    };
-
-    initMap();
+    })();
   }, []);
 
   useEffect(() => {
     if (!map) return;
 
-    const load = async () => {
-      console.log('🛰️ initGeolocation 호출');
-      await initGeolocation();
-      console.log('🔄 마커 로드 시작');
-      await loadMarkers();
+    let timer: any;
+    const debouncedReload = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { loadMarkers(); }, 120);
     };
 
-    load();
+    (async () => { await initGeolocation(); await loadMarkers(); })();
 
-    // 드래그/줌 후 마커 다시 로드
-    const zoomListener = window.kakao.maps.event.addListener(map, 'zoom_changed', loadMarkers);
-    const dragListener = window.kakao.maps.event.addListener(map, 'dragend', loadMarkers);
+    window.kakao.maps.event.addListener(map, 'idle', debouncedReload);
 
     return () => {
-      window.kakao.maps.event.removeListener(map, 'zoom_changed', loadMarkers);
-      window.kakao.maps.event.removeListener(map, 'dragend', loadMarkers);
+      if (timer) clearTimeout(timer);
+      window.kakao.maps.event.removeListener(map, 'idle', debouncedReload);
+      clearOverlays();
     };
-  }, [map, currentLat, currentLng]);
+  }, [map, loadMarkers]);
+
+  const ColorDot: React.FC<{ type: string }> = ({ type }) => {
+    const key = String(type ?? '').trim().toUpperCase();
+    const col = (disasterColors as any)?.[key] || '#808080';
+    return <span style={{ display:'inline-block', width:10, height:10, borderRadius:'50%', background:col, marginRight:8, border:'1px solid rgba(0,0,0,0.2)' }} />;
+  };
 
   return (
-    <Box sx={{ height, border: '1px dashed', borderColor: 'divider', borderRadius: 2, position: 'relative' }}>
-      <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
+    <Box sx={{ display:'flex', flexDirection:'column', gap:2 }}>
+      <Box sx={{ height, border:'1px dashed', borderColor:'divider', borderRadius:2, position:'relative' }}>
+        <div ref={mapContainer} style={{ width:'100%', height:'100%' }} />
+      </Box>
+
+      <Paper variant="outlined">
+        <Box sx={{ p:2 }}>
+          <Typography variant="h6" sx={{ fontWeight:700, mb:1 }}>지도 내 재난 목록</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb:1 }}>건수별 내림차순</Typography>
+          <TableContainer sx={{ maxHeight:260 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>유형</TableCell>
+                  <TableCell>상태</TableCell>
+                  <TableCell>건수</TableCell>
+                  <TableCell>위도</TableCell>
+                  <TableCell>경도</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.map((r, i) => (
+                  <TableRow key={`${r.disasterType}-${r.latitude}-${r.longitude}-${i}`}>
+                    <TableCell><ColorDot type={r.disasterType} />{r.disasterType}</TableCell>
+                    <TableCell><Chip size="small" label={r.status} variant="outlined" sx={{ height:22 }} /></TableCell>
+                    <TableCell>{r.count}</TableCell>
+                    <TableCell>{r.latitude.toFixed(5)}</TableCell>
+                    <TableCell>{r.longitude.toFixed(5)}</TableCell>
+                  </TableRow>
+                ))}
+                {rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" style={{ color:'#888' }}>
+                      표시할 데이터가 없습니다.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      </Paper>
     </Box>
   );
 };
