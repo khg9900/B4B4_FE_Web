@@ -23,8 +23,8 @@ const DisasterMap: React.FC<Props> = ({ height = 420 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const overlaysRef = useRef<any[]>([]);
   const [map, setMap] = useState<any>();
-  const [currentLat, setCurrentLat] = useState(37.5665);
-  const [currentLng, setCurrentLng] = useState(126.9780);
+  const [currentLat, setCurrentLat] = useState<number | null>(null);
+  const [currentLng, setCurrentLng] = useState<number | null>(null);
   const [rows, setRows] = useState<DisasterMarker[]>([]);
 
   const initGeolocation = async () =>
