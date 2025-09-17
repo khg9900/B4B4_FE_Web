@@ -36,9 +36,9 @@ export default function MapPage() {
         <Topbar />
         <Box sx={{ px:3, py:2 }}>
           <Stack spacing={0.5} sx={{ mb: 2 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800 }}>당일 접수 현황</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800 }}>접수 현황</Typography>
             <Typography variant="body2" color="text.secondary">
-              {todayLabel} · {locationLabel} 기준
+              {locationLabel} 기준
             </Typography>
           </Stack>
 

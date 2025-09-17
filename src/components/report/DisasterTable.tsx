@@ -183,7 +183,7 @@ export default function DisasterTable() {
       <div ref={topRef} />
 
       {/* 타이틀 단독 */}
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+      <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
         재난 신고 목록
       </Typography>
 
