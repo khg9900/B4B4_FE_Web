@@ -11,6 +11,7 @@ import {
   Button,
   CircularProgress,
   Paper,
+  Dialog,           // 추가
 } from '@mui/material';
 import AppDialog from '../AppDialog';
 import type { ReportDto, ReportStatusEN } from '../../types/report';
@@ -26,6 +27,9 @@ type Props = {
 export default function DisasterDetailModal({ open, onClose, data, onStatusChange }: Props) {
   const [status, setStatus] = React.useState<ReportStatusEN>(data.status);
   const [saving, setSaving] = React.useState(false);
+
+  // 원본 이미지 보기 다이얼로그 상태
+  const [imageOpen, setImageOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (open) setStatus(data.status);
@@ -48,7 +52,6 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
     }
   };
 
-  /** 공통: 라벨+값 한 줄 */
   const InfoRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <Stack direction="row" spacing={2} alignItems="center" sx={{ minHeight: 32 }}>
       <Typography sx={{ width: { xs: 96, sm: 120 }, fontWeight: 700, fontSize: 15 }}>
@@ -58,7 +61,6 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
     </Stack>
   );
 
-  /** 공통: 박스 섹션 */
   const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <Paper
       variant="outlined"
@@ -75,6 +77,93 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
       {children}
     </Paper>
   );
+
+  // 첨부 뷰어: 고정 박스(200x140) 안에 레터박스(잘림 없음). 디자인 유지.
+  const AttachmentBox: React.FC<{ imageUrl?: string | null; videoUrl?: string | null }> = ({
+    imageUrl,
+    videoUrl,
+  }) => {
+    if (videoUrl) {
+      return (
+        <Box
+          component="video"
+          src={videoUrl}
+          controls
+          preload="metadata"
+          sx={{
+            width: 200,
+            height: 140,
+            objectFit: 'contain',
+            borderRadius: 1.5,
+            border: '1px solid',
+            borderColor: 'divider',
+            display: 'block',
+            bgcolor: 'black',
+          }}
+        />
+      );
+    }
+    if (imageUrl) {
+      return (
+        <>
+          <Box
+            component="img"
+            src={imageUrl}
+            alt="신고 이미지"
+            onClick={() => setImageOpen(true)} // 클릭 시 확대
+            sx={{
+              width: 200,
+              height: 140,
+              objectFit: 'contain',
+              borderRadius: 1.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              display: 'block',
+              bgcolor: 'background.default',
+              cursor: 'zoom-in',
+            }}
+          />
+          <Dialog
+            open={imageOpen}
+            onClose={() => setImageOpen(false)}
+            maxWidth="lg"
+          >
+            <Box
+              component="img"
+              src={imageUrl}
+              alt="원본 이미지"
+              sx={{
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                objectFit: 'contain', // 원본 비율 유지
+                display: 'block',
+              }}
+              onClick={() => setImageOpen(false)} // 클릭으로 닫기
+            />
+          </Dialog>
+        </>
+      );
+    }
+    return (
+      <Box
+        sx={{
+          p: 2,
+          border: '1px dashed',
+          borderColor: 'divider',
+          borderRadius: 1.5,
+          color: 'text.secondary',
+          textAlign: 'center',
+          width: 200,
+          height: 140,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        첨부 없음
+      </Box>
+    );
+  };
 
   return (
     <AppDialog
@@ -169,35 +258,7 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
 
         {/* 첨부 */}
         <Section title="첨부 자료">
-          {data.imageUrl ? (
-            <Box
-              component="img"
-              src={data.imageUrl}
-              alt="신고 이미지"
-              sx={{
-                width: 200,
-                height: 140,
-                objectFit: 'cover',
-                borderRadius: 1.5,
-                border: '1px solid',
-                borderColor: 'divider',
-                display: 'block',
-              }}
-            />
-          ) : (
-            <Box
-              sx={{
-                p: 2,
-                border: '1px dashed',
-                borderColor: 'divider',
-                borderRadius: 1.5,
-                color: 'text.secondary',
-                textAlign: 'center',
-              }}
-            >
-              첨부 없음
-            </Box>
-          )}
+          <AttachmentBox imageUrl={data.imageUrl as any} videoUrl={(data as any).videoUrl as any} />
         </Section>
 
         {/* 시간 */}
