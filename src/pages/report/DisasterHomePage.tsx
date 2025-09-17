@@ -112,11 +112,11 @@ export default function DisasterHomePage() {
             sx={{ mb: 2 }}
           >
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                당일 접수 현황
+              <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
+                접수 현황
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {todayLabel} · {locationLabel} 기준
+                {locationLabel} 기준
               </Typography>
             </Box>
 
