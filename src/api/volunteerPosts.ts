@@ -57,7 +57,7 @@ export async function fetchMyPosts(params: MyPostQuery = {}) {
   };
 }
 
-// (신규 추가) 전체 목록: /post
+// (신규 추가) 전체 목록: /posts
 export async function fetchPosts(params: any = {}) {
   const res = await api.get('/posts', { params });
   const slice = unwrap<any>(res);
@@ -83,18 +83,18 @@ export async function createVolunteerPost(payload: CreatePostRequest) {
   return res.status;
 }
 
-/** 게시글 수정 (PATCH /post/{id}) — Detail(KO) → Update(EN) */
+/** 게시글 수정 (PATCH /posts/{id}) — Detail(KO) → Update(EN) */
 export async function updateVolunteerPost(id: number, form: DetailPost) {
   const body = toUpdateRequest(form);
   await api.patch(`/posts/${id}`, body);
 }
 
-/** 게시글 삭제 (DELETE /post/{id}) */
+/** 게시글 삭제 (DELETE /posts/{id}) */
 export async function deleteVolunteerPost(id: number) {
   await api.delete(`/posts/${id}`);
 }
 
-/** 팀 현황 조회 (GET /post/{postId}/teams) */
+/** 팀 현황 조회 (GET /posts/{postId}/teams) */
 export async function fetchPostTeams(postId: number): Promise<TeamStatus[]> {
   const res = await api.get(`/posts/${postId}/teams`);
   const payload = unwrap<any>(res);
@@ -155,7 +155,7 @@ export async function updateParticipantAttendance(
   body: CheckinStatusRequest
 ): Promise<void> {
   await api.patch(
-    `/posts/${postId}/teams/${teamId}/volunteer-participants/${participantId}`,
+    `/posts/${postId}/teams/${teamId}/participants/${participantId}`,
     body
   );
 }
