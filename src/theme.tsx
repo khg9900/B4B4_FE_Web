@@ -1,4 +1,3 @@
-// src/theme.ts
 import { createTheme } from '@mui/material/styles';
 
 const ORANGE_MAIN = '#ff7c33';

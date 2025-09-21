@@ -1,4 +1,3 @@
-// src/components/RequireAuth.tsx
 import { Navigate, useLocation } from 'react-router-dom';
 import type { ReactElement } from 'react';
 import { getAccessToken, getCurrentRole, type UserRole } from '../../auth/tokenStore';

@@ -11,11 +11,12 @@ import {
   Button,
   CircularProgress,
   Paper,
-  Dialog,           // 추가
+  Dialog,
 } from '@mui/material';
 import AppDialog from '../AppDialog';
 import type { ReportDto, ReportStatusEN } from '../../types/report';
 import { DISASTER_TYPE_KO, REPORT_STATUS_KO } from '../../types/report';
+import { logger } from '../../utils/logger';
 
 type Props = {
   open: boolean;
@@ -45,7 +46,11 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
       await onStatusChange(data.id, status);
       onClose();
     } catch (e) {
-      console.error(e);
+      logger.capture('DisasterDetailModal:handleSave', e, {
+        id: data.id,
+        prev: data.status,
+        next: status,
+      });
       alert('상태 변경에 실패했습니다.');
     } finally {
       setSaving(false);
@@ -78,7 +83,6 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
     </Paper>
   );
 
-  // 첨부 뷰어: 고정 박스(200x140) 안에 레터박스(잘림 없음). 디자인 유지.
   const AttachmentBox: React.FC<{ imageUrl?: string | null; videoUrl?: string | null }> = ({
     imageUrl,
     videoUrl,
@@ -100,6 +104,7 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
             display: 'block',
             bgcolor: 'black',
           }}
+          onError={(e) => logger.capture('DisasterDetailModal:videoLoadError', new Error('video load error'))}
         />
       );
     }
@@ -110,7 +115,8 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
             component="img"
             src={imageUrl}
             alt="신고 이미지"
-            onClick={() => setImageOpen(true)} // 클릭 시 확대
+            onClick={() => setImageOpen(true)}
+            onError={() => logger.capture('DisasterDetailModal:imageLoadError', new Error('image load error'))}
             sx={{
               width: 200,
               height: 140,
@@ -123,11 +129,7 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
               cursor: 'zoom-in',
             }}
           />
-          <Dialog
-            open={imageOpen}
-            onClose={() => setImageOpen(false)}
-            maxWidth="lg"
-          >
+          <Dialog open={imageOpen} onClose={() => setImageOpen(false)} maxWidth="lg">
             <Box
               component="img"
               src={imageUrl}
@@ -135,10 +137,11 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
               sx={{
                 maxWidth: '90vw',
                 maxHeight: '90vh',
-                objectFit: 'contain', // 원본 비율 유지
+                objectFit: 'contain',
                 display: 'block',
               }}
-              onClick={() => setImageOpen(false)} // 클릭으로 닫기
+              onClick={() => setImageOpen(false)}
+              onError={() => logger.capture('DisasterDetailModal:imageLoadError', new Error('image load error (dialog)'))}
             />
           </Dialog>
         </>

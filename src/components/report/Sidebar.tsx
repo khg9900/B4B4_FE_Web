@@ -1,4 +1,3 @@
-// src/components/Sidebar.tsx
 import {
   Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText,
 } from '@mui/material';

@@ -1,4 +1,3 @@
-// src/hooks/useRegionsCsv.ts
 import { useEffect, useMemo, useState } from 'react';
 
 type RegionRow = { province: string; city: string };

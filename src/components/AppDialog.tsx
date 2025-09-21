@@ -1,4 +1,3 @@
-// AppDialog.tsx
 import type { ReactNode } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Box

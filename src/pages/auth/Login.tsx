@@ -1,4 +1,3 @@
-// src/pages/Login.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Box, Paper, Typography, TextField, Button, Checkbox, FormControlLabel,

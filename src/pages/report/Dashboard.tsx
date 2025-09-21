@@ -1,4 +1,3 @@
-// src/pages/DashboardPage.tsx
 import { Box, CssBaseline } from '@mui/material';
 import Sidebar from '../../components/report/Sidebar';
 import Topbar from '../../components/Topbar';

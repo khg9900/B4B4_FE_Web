@@ -1,4 +1,3 @@
-// src/pages/SignupSelect.tsx
 import { Box, Paper, Stack, Button } from '@mui/material';
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
 import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
@@ -14,7 +13,7 @@ export default function SignupSelect() {
     <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: '#fafafa', p: 2 }}>
       <Paper elevation={3} sx={{ width: '100%', maxWidth: 520, p: { xs: 3, md: 4 }, borderRadius: 2 }}>
         <Stack spacing={3} alignItems="center">
-          {/* ✅ 로고 아래 여백을 늘려서 로고-버튼 간격 확대 */}
+          {/* 로고 아래 여백을 늘려서 로고-버튼 간격 확대 */}
           <Box component="img" src={LogoImage} alt="로고" sx={{ height: 88, mb: 20.5 }} />
 
           <Box></Box>

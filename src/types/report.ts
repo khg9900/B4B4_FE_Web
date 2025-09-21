@@ -1,4 +1,3 @@
-// src/types/report.ts
 export type DisasterTypeEN =
   | 'EARTHQUAKE'
   | 'FLOOD'
