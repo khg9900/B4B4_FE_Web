@@ -11,7 +11,7 @@ import {
   Button,
   CircularProgress,
   Paper,
-  Dialog,           // 추가
+  Dialog,
 } from '@mui/material';
 import AppDialog from '../AppDialog';
 import type { ReportDto, ReportStatusEN } from '../../types/report';
@@ -28,7 +28,6 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
   const [status, setStatus] = React.useState<ReportStatusEN>(data.status);
   const [saving, setSaving] = React.useState(false);
 
-  // 원본 이미지 보기 다이얼로그 상태
   const [imageOpen, setImageOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -78,7 +77,6 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
     </Paper>
   );
 
-  // 첨부 뷰어: 고정 박스(200x140) 안에 레터박스(잘림 없음). 디자인 유지.
   const AttachmentBox: React.FC<{ imageUrl?: string | null; videoUrl?: string | null }> = ({
     imageUrl,
     videoUrl,
@@ -110,7 +108,7 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
             component="img"
             src={imageUrl}
             alt="신고 이미지"
-            onClick={() => setImageOpen(true)} // 클릭 시 확대
+            onClick={() => setImageOpen(true)}
             sx={{
               width: 200,
               height: 140,
@@ -135,10 +133,10 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
               sx={{
                 maxWidth: '90vw',
                 maxHeight: '90vh',
-                objectFit: 'contain', // 원본 비율 유지
+                objectFit: 'contain',
                 display: 'block',
               }}
-              onClick={() => setImageOpen(false)} // 클릭으로 닫기
+              onClick={() => setImageOpen(false)}
             />
           </Dialog>
         </>
@@ -261,7 +259,6 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
           <AttachmentBox imageUrl={data.imageUrl as any} videoUrl={(data as any).videoUrl as any} />
         </Section>
 
-        {/* 시간 */}
         <Section title="타임라인">
           <Grid container spacing={2.5}>
             <Grid size={12}>

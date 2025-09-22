@@ -10,7 +10,6 @@ export type Participant = {
   status: 'PRESENT' | 'ABSENT' | 'BLACKLISTED' | 'CANCELLED' | 'PARTICIPATED';
 };
 
-// 지역 파싱
 export function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
   let province = region1;
   let city: string | null = region2;
@@ -38,14 +37,12 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
     return null;
   }, [data]);
 
-  // DB 기준 봉사 완료 여부
   const isCompleted = data.status === '봉사 완료';
 
   useEffect(() => {
     if (open) setEdited(data);
   }, [open, data]);
 
-  // 팀 로딩
   useEffect(() => {
     let ignore = false;
     const loadTeams = async () => {
@@ -65,17 +62,12 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
     return () => { ignore = true; };
   }, [open, postId]);
 
-  // ---------------------------
-  // 글 단위 수정 처리
-  // ---------------------------
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any) => {
     const { name, value } = e.target;
     if (!name) return;
 
-    // DB 기준 이미 완료면 수정 자체 불가
     if (isCompleted) return;
 
-    // DB는 완료 아님 + 프론트에서 status=완료 선택 → 알림만
     if (name === 'status' && value === '봉사 완료' && edited.status !== '봉사 완료') {
       alert('⚠️ 봉사 완료 버튼을 누르면 더 이상 수정할 수 없습니다.');
     }
@@ -83,9 +75,6 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
     setEdited(prev => ({ ...prev, [name]: value }));
   };
 
-  // -----------------------
-  // 필드 검증 (빈칸 체크)
-  // -----------------------
   const getFieldErrors = (): Record<string, string> => {
     const errors: Record<string,string> = {};
     if (!edited.title) errors.title = '제목을 입력해주세요.';
@@ -105,9 +94,6 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
     return errors;
   };
 
-  // -----------------------
-  // 논리/계산 체크 알림 (빨간줄)
-  // -----------------------
   const getAlerts = (): Record<string,string> => {
     const alerts: Record<string,string> = {};
     const parseTime = (time:string) => { const [h,m]=time.split(':').map(Number); return h*60+m; };
@@ -152,16 +138,10 @@ export default function useVolunteerDetail(data: DetailPost, open: boolean) {
 
   const alerts = getAlerts();
 
-  // -----------------------
-  // isSubmitDisabled 계산
-  // -----------------------
   const fieldErrors = getFieldErrors();
   const isAlerted = Object.keys(alerts).length > 0;
-  const isSubmitDisabled = Object.keys(fieldErrors).length > 0 || isAlerted || isCompleted; // DB 기준만 사용
+  const isSubmitDisabled = Object.keys(fieldErrors).length > 0 || isAlerted || isCompleted;
 
-  // ---------------------------
-  // 팀/참가자 관리
-  // ---------------------------
   const toggleTeam = async (teamId:number) => {
     const next = !expandedTeams[teamId];
     setExpandedTeams(prev=>({...prev,[teamId]:next}));

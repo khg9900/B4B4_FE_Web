@@ -1,4 +1,3 @@
-// src/components/Sidebar.tsx
 import {
   Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText,
 } from '@mui/material';
@@ -63,7 +62,6 @@ export default function Sidebar() {
                 '& .MuiListItemIcon-root': { color: '#fff' },
               },
 
-              // 링크 상태 전부 흰색 고정
               '&:link, &:visited, &:active, &:focus': { color: '#fff' },
             }}
           >

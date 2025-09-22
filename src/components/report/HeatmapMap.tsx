@@ -1,4 +1,3 @@
-// src/components/DisasterMap.tsx
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -11,7 +10,6 @@ declare global { interface Window { kakao: any; } }
 
 interface Props { height?: number; }
 
-// HEX → rgba 변환
 const hexToRgba = (hex: string, a = 0.35) => {
   const h = hex.replace('#','');
   const bigint = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);

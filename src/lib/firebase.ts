@@ -1,4 +1,3 @@
-// src/lib/firebase.ts
 import { initializeApp } from 'firebase/app';
 
 export const app = initializeApp({

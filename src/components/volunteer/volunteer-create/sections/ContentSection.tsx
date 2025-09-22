@@ -4,7 +4,7 @@ import { TextField } from '@mui/material';
 type Props = {
   content: string;
   setContent: React.Dispatch<React.SetStateAction<string>>;
-  errors?: { content?: string }; // 추가
+  errors?: { content?: string };
 };
 
 export default function ContentSection({ content, setContent, errors }: Props) {

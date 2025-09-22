@@ -1,4 +1,3 @@
-// src/api/http.ts
 import axios, { type AxiosError } from 'axios';
 import {
   loadTokensFromStorage,

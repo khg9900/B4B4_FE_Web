@@ -32,7 +32,7 @@ export function loadKakaoMap(): Promise<typeof window.kakao> {
 
   return loadingPromise;
 }
-// 장소 검색 예시
+
 export async function searchPlace(keyword: string) {
   const kakao = await loadKakaoMap();
 

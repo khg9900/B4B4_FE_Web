@@ -3,10 +3,10 @@ import type { PostStatus } from '../../../../types/volunteer';
 
 type Props = {
   status: PostStatus;
-  onChange?: (e: any) => void; // optional
+  onChange?: (e: any) => void;
   error?: boolean;
   helperText?: string;
-  isCompleted?: boolean; // 봉사 완료 여부
+  isCompleted?: boolean;
 };
 
 export default function StatusSection({ status, onChange, error, helperText, isCompleted = false }: Props) {
@@ -20,8 +20,8 @@ export default function StatusSection({ status, onChange, error, helperText, isC
         label="상태"
         name="status"
         value={status}
-        onChange={readOnly ? undefined : onChange} // 수정 불가 시 onChange 제거
-        disabled={readOnly} // 선택 불가 처리
+        onChange={readOnly ? undefined : onChange}
+        disabled={readOnly}
       >
         <MenuItem value="모집 중">모집 중</MenuItem>
         <MenuItem value="모집 마감">모집 마감</MenuItem>

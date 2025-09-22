@@ -1,4 +1,3 @@
-// src/components/VolunteerDetailModal.tsx
 import React, { useEffect, useState } from 'react';
 import {
   TextField, Typography, Button, Select, MenuItem,
@@ -237,7 +236,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
           좌표: 위도 {edited.latitude ?? '-'}, 경도 {edited.longitude ?? '-'}
         </Typography>
 
-        {/* ✅ 지도 기능 추가 */}
         <Button variant="outlined" onClick={() => setLocationModalOpen(true)}>
           위치 변경
         </Button>
@@ -245,7 +243,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
           <Box sx={{ width: 600, bgcolor: 'white', p: 2, mx: 'auto', mt: '10%', borderRadius: 2 }}>
             <LocationPicker
               province={province}
-              city={city ?? ''} // null이면 '' 처리
+              city={city ?? ''}
               placeName={edited.placeName ?? ''}
               latitude={String(edited.latitude ?? '')}
               longitude={String(edited.longitude ?? '')}
@@ -260,7 +258,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
                 setEdited((prev) => {
                   const parts = (prev.location ?? '').split(' ');
                   const provincePart = parts[0] ?? '';
-                  const safeCity = v ?? ''; // null이면 ''
+                  const safeCity = v ?? '';
                   return { ...prev, location: `${provincePart} ${safeCity}`.trim() };
                 })
               }
@@ -275,7 +273,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
           </Box>
         </Modal>
 
-        {/* 출석 정책 */}
         <Typography variant="h6" sx={{ mt: 1 }}>출석 정책</Typography>
         <Stack direction="row" spacing={2}>
           <Box flex={1}><TextField fullWidth type="time" label="출석 시작 시간" name="attendanceStartTime" value={edited.attendanceStartTime ?? ''} onChange={handleChange} InputLabelProps={{ shrink: true }} /></Box>
@@ -285,7 +282,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
           <TextField fullWidth type="number" inputProps={{ min: 0 }} label="출석 인정 반경" name="attendanceRadius" value={edited.attendanceRadius ?? 0} onChange={handleChange} InputProps={{ endAdornment: <InputAdornment position="end">m</InputAdornment> }} />
         </Box>
 
-        {/* 팀 운영 */}
         <Typography variant="h6" sx={{ mt: 1 }}>팀 운영</Typography>
         <Stack direction="row" spacing={2}>
           <Box flex={1}><TextField fullWidth label="팀 개수" value={teamCount} disabled /></Box>

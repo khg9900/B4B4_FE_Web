@@ -1,4 +1,3 @@
-// src/auth/tokenStore.ts
 export type UserRole = 'GOV' | 'NGO';
 
 const ACCESS_KEY = 'AT';
@@ -33,7 +32,6 @@ export function clearTokens() {
   localStorage.removeItem(REFRESH_KEY);
 }
 
-/* ── JWT payload decode ── */
 function decodeJwtPayload(at: string): any | null {
   try {
     const part = at.split('.')[1];
@@ -51,10 +49,9 @@ export function getClaims(): any | null {
   return at ? decodeJwtPayload(at) : null;
 }
 
-/* ── 만료 관련 ── */
 export function getAccessTokenExp(): number | null {
   const exp = getClaims()?.exp;
-  return typeof exp === 'number' ? exp : null; // seconds (Unix)
+  return typeof exp === 'number' ? exp : null;
 }
 
 export function isAccessTokenExpired(skewSec = 10): boolean {
@@ -64,7 +61,6 @@ export function isAccessTokenExpired(skewSec = 10): boolean {
   return now >= exp - skewSec;
 }
 
-/* ── 현재 역할 ── */
 export function getCurrentRole(): UserRole | null {
   const c = getClaims();
   const raw =

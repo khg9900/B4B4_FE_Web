@@ -1,4 +1,3 @@
-// src/pages/VolunteerPosts.tsx
 import { useEffect, useState, useCallback } from 'react';
 import { Box, Button, Typography, Stack } from '@mui/material';
 import Topbar from '../../components/Topbar';
@@ -40,7 +39,7 @@ export default function Post() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const slice = await fetchMyPosts(query); // { content, page, size, hasNext }
+      const slice = await fetchMyPosts(query);
       setRows(slice.content);
       setPage(slice.page);
       setSize(slice.size);
@@ -57,7 +56,6 @@ export default function Post() {
     void load();
   }, [load]);
 
-  // 페이지가 확정되면 상단으로 스크롤
   useEffect(() => {
     if (loading) return;
     const pane = document.getElementById('page-scroll');
@@ -65,12 +63,11 @@ export default function Post() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [page, loading]);
 
-  // 검색 → 0페이지로 리셋
   const handleSearch = useCallback((filters: {
     province?: string;
     city?: string;
-    status?: string;       // KO
-    category?: string;     // KO
+    status?: string;
+    category?: string;
     volunteerFrom?: string;
     volunteerTo?: string;
   }) => {
@@ -118,7 +115,6 @@ export default function Post() {
     await load();
   }, [load]);
 
-  // ✅ 삭제 후 목록 새로고침 + 모달 닫기
   const handleDeleteDetail = useCallback(async (id: number) => {
     await deleteVolunteerPost(id);
     await load();
@@ -130,11 +126,9 @@ export default function Post() {
     void load();
   }, [load]);
 
-  // 페이지 이동
   const goPrev = () => setQuery(q => ({ ...q, page: Math.max(0, (q.page ?? 0) - 1) }));
   const goNext = () => { if (hasNext) setQuery(q => ({ ...q, page: (q.page ?? 0) + 1 })); };
 
-  // 표시 개수 변경 (10/20/30/50)
   const handlePageSizeChange = (newSize: number) => {
     setSize(newSize);
     setQuery(q => ({ ...q, page: 0, size: newSize }));
@@ -143,14 +137,12 @@ export default function Post() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Topbar />
-      {/* 스크롤 기준 컨테이너 */}
       <Box id="page-scroll" sx={{ flexGrow: 1, p: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h5">봉사활동 게시글 관리</Typography>
           <Button variant="contained" onClick={() => setCreateOpen(true)}>+ 게시글 등록</Button>
         </Stack>
 
-        {/* 필터 + 상단 페이지 표시/크기 선택은 VolunteerTable에서 렌더 */}
         <VolunteerTable
           rows={rows}
           onRowClick={handleRowClick}
@@ -160,7 +152,6 @@ export default function Post() {
           onSizeChange={handlePageSizeChange}
         />
 
-        {/* 하단: 이전/다음만 중앙 정렬 */}
         <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
           <Button variant="outlined" onClick={goPrev} disabled={loading || page === 0} sx={{ mr: 1 }}>
             이전

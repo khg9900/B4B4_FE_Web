@@ -1,4 +1,3 @@
-// src/lib/fcm.ts
 import { isSupported, getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { app } from './firebase';
 import { api } from '../api/http';
@@ -29,12 +28,6 @@ async function ensureSw(): Promise<ServiceWorkerRegistration | null> {
   return navigator.serviceWorker.register('/firebase-messaging-sw.js');
 }
 
-/**
- * 로그인 직후 호출:
- *  - 알림 권한 요청
- *  - FCM 토큰 발급
- *  - 서버 /devices 등록
- */
 export async function registerDeviceAfterLogin(): Promise<string | null> {
   try {
     if (!(await isSupported())) {
@@ -56,7 +49,7 @@ export async function registerDeviceAfterLogin(): Promise<string | null> {
     const { model, osVersion } = getBrowserDeviceMeta();
 
     await api.post('/devices', {
-      type: 'DESKTOP', // 웹은 DESKTOP로 통일(백엔드 enum 기준)
+      type: 'DESKTOP',
       os,
       osVersion,
       model,
@@ -70,11 +63,6 @@ export async function registerDeviceAfterLogin(): Promise<string | null> {
   }
 }
 
-/**
- * 앱 구동 시 1회 호출:
- *  - 탭이 활성(포그라운드)일 때 수신되는 메시지 처리
- *  - 서비스워커를 통해 OS 알림을 띄워 배경과 동일 UX 제공
- */
 export async function initForegroundFcmListener() {
   if (!(await isSupported())) return;
 
@@ -87,10 +75,8 @@ export async function initForegroundFcmListener() {
     try {
       const reg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
       if (reg) {
-        // OS 알림(포그라운드에서도 동일하게)
         await reg.showNotification(title, { body, icon });
       } else if (Notification.permission === 'granted') {
-        // 매우 드문 경우: SW 없으면 페이지에서 직접
         new Notification(title, { body, icon });
       }
     } catch (e) {

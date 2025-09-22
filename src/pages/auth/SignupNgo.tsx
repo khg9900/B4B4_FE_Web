@@ -1,4 +1,3 @@
-// src/pages/SignupNgo.tsx
 import { Box, Paper, Stack, Typography, TextField, Button, Alert } from '@mui/material';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -43,7 +42,6 @@ export default function SignupNgo() {
         name: org,
         phoneNumber: phone,
         userRole: 'NGO' as const,
-        // NGO는 지역 선택 없음
       };
       await signup(body);
 

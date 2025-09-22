@@ -34,7 +34,7 @@ export default function AttendanceSection({
             name="attendanceStartTime"
             value={attendanceStartTime ?? ''}
             onChange={onChange}
-            disabled={readOnly} // 읽기 전용 처리
+            disabled={readOnly}
             InputLabelProps={{ shrink: true }}
             error={!!errors?.startTime}
             helperText={errors?.startTime}
@@ -49,7 +49,7 @@ export default function AttendanceSection({
             name="attendanceEndTime"
             value={attendanceEndTime ?? ''}
             onChange={onChange}
-            disabled={readOnly} // 읽기 전용 처리
+            disabled={readOnly}
             InputLabelProps={{ shrink: true }}
             InputProps={{ readOnly }}
             error={!!errors?.endTime}
@@ -67,7 +67,7 @@ export default function AttendanceSection({
           name="attendanceRadius"
           value={attendanceRadius ?? 0}
           onChange={onChange}
-          disabled={readOnly} // 읽기 전용 처리
+          disabled={readOnly}
           InputProps={{
             endAdornment: <InputAdornment position="end">m</InputAdornment>,
           }}

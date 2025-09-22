@@ -1,4 +1,3 @@
-// src/components/DisasterTable.tsx
 import {
   Box,
   Paper,
@@ -42,37 +41,29 @@ const getStatusColor = (status: ReportStatusEN) => {
 };
 
 export default function DisasterTable() {
-  // ── 쿼리 상태 ───────────────────────────────
   const [query, setQuery] = useState<{
-    si: string;                 // province
-    gu: string;                 // city (시/구)
+    province: string;
+    city: string; 
     status?: ReportStatusEN;
-    page: number;               // 0-based
+    page: number;
     size: number;
   }>({
-    si: '',
-    gu: '',
+    province: '',
+    city: '',
     page: 0,
     size: 10,
   });
 
-  // 데이터/플래그
   const [items, setItems] = useState<ReportDto[]>([]);
   const [hasNext, setHasNext] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
-
-  // 상태 필터(ALL = 전체)
   const [statusFilter, setStatusFilter] = useState<'ALL' | ReportStatusEN>('ALL');
-
-  // 상세 모달
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState<ReportDto | null>(null);
 
-  // (선택) 예전 코드 호환용 — 꼭 쓸 필요는 없음
   const topRef = useRef<HTMLDivElement>(null);
 
-  // ✅ 1) 브라우저 자동 스크롤 복원 끄고, 마운트 시 최상단으로
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
@@ -80,23 +71,21 @@ export default function DisasterTable() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
-  // ✅ 내 정보에서 province/city 받아와 초기 쿼리에 주입
   useEffect(() => {
     let ignore = false;
     (async () => {
       try {
         const me = await getMyInfoCached();
         if (ignore) return;
-        const si = me.province || '';
-        const gu = me.city || '';
+        const province = me.province || '';
+        const city = me.city || '';
         setQuery((q) => ({
           ...q,
-          si,
-          gu,
-          page: 0, // 지역이 바뀌면 0페이지부터
+          province,
+          city,
+          page: 0,
         }));
-        // 지역이 확정되면 상단으로
-        if (si && gu) window.scrollTo({ top: 0, behavior: 'auto' });
+        if (province && city) window.scrollTo({ top: 0, behavior: 'auto' });
       } catch (e) {
         console.error('[DisasterTable] getMyInfoCached failed:', e);
       }
@@ -104,7 +93,6 @@ export default function DisasterTable() {
     return () => { ignore = true; };
   }, []);
 
-  // 상태 필터 → 쿼리 반영(+page reset)
   useEffect(() => {
     setQuery((q) => ({
       ...q,
@@ -113,23 +101,19 @@ export default function DisasterTable() {
     }));
   }, [statusFilter]);
 
-  // ✅ 2) 페이지 바뀔 때마다 최상단으로
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // (이전 코드 유지하고 싶다면)
-    // topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [query.page]);
 
   const load = useCallback(async () => {
-    // 지역 정보가 아직 준비되지 않았으면 요청하지 않음
-    if (!query.si) return;
+    if (!query.province) return;
 
     try {
       setLoading(true);
       setErrorMsg('');
       const slice = await fetchReportsSlice({
-        si: query.si,
-        gu: query.gu ?? '',
+        province: query.province,
+        city: query.city ?? '',
         status: query.status,
         page: query.page,
         size: query.size,
@@ -137,7 +121,6 @@ export default function DisasterTable() {
       setItems(slice.content);
       setHasNext(slice.hasNext);
 
-      // ✅ 3) 데이터 갱신 직후에도 상단 정렬 유지
       window.scrollTo({ top: 0, behavior: 'auto' });
     } catch (e: any) {
       setErrorMsg(e?.message || '목록 조회 실패');
@@ -150,7 +133,6 @@ export default function DisasterTable() {
     void load();
   }, [load]);
 
-  // 모달
   const openModal = (row: ReportDto) => {
     setSelected(row);
     setModalOpen(true);
@@ -160,7 +142,6 @@ export default function DisasterTable() {
     setModalOpen(false);
   };
 
-  // 상태 저장(낙관적)
   const handleStatusChange = async (id: number, newStatus: ReportStatusEN) => {
     setItems((prev) => prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)));
     if (selected?.id === id) setSelected({ ...selected, status: newStatus });
@@ -168,21 +149,19 @@ export default function DisasterTable() {
     try {
       await updateReportStatus(id, newStatus);
     } catch (e) {
-      await load(); // 실패 시 재조회
+      await load();
       console.error(e);
     }
   };
 
-  // 페이지 이동
   const goPrev = () => setQuery((q) => ({ ...q, page: Math.max(0, q.page - 1) }));
   const goNext = () => hasNext && setQuery((q) => ({ ...q, page: q.page + 1 }));
 
   return (
     <Box px={3} py={2} sx={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
-      {/* (선택) 호환용 ref — 남겨둬도 무관 */}
       <div ref={topRef} />
 
-      {/* 타이틀 단독 */}
+      {/* 타이틀 */}
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
         재난 신고 목록
       </Typography>
@@ -285,7 +264,7 @@ export default function DisasterTable() {
             {!loading && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                  {query.si ? '데이터가 없습니다.' : '지역 정보를 불러오는 중…'}
+                  {query.province ? '데이터가 없습니다.' : '지역 정보를 불러오는 중…'}
                 </TableCell>
               </TableRow>
             )}
@@ -293,7 +272,7 @@ export default function DisasterTable() {
         </Table>
       </Paper>
 
-      {/* 하단 페이지 컨트롤: 가운데 정렬 */}
+      {/* 하단 페이지 컨트롤 */}
       <Stack direction="row" spacing={1.5} justifyContent="center" mt={2}>
         <Button
           variant="outlined"
@@ -312,7 +291,6 @@ export default function DisasterTable() {
         </Button>
       </Stack>
 
-      {/* ✅ data가 있을 때만 모달 렌더 */}
       {modalOpen && selected && (
         <DisasterDetailModal
           open

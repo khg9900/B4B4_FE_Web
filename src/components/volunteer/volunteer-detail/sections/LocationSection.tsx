@@ -1,4 +1,3 @@
-// src/components/volunteer/LocationSection.tsx
 import { useState } from 'react';
 import { Box, TextField, Typography, Button, Modal, Stack } from '@mui/material';
 import LocationPicker, { parseRegion } from '../../LocationPicker';
@@ -7,7 +6,7 @@ import type { DetailPost } from '../../../../types/volunteer';
 type Props = {
   edited: DetailPost;
   setEdited: (next: DetailPost) => void;
-  isCompleted?: boolean; // 봉사 완료 여부
+  isCompleted?: boolean;
 };
 
 export default function LocationSection({ edited, setEdited, isCompleted = false }: Props) {
@@ -29,7 +28,7 @@ export default function LocationSection({ edited, setEdited, isCompleted = false
   );
 
   const handleConfirm = () => {
-    if (isCompleted) return; // 봉사 완료 글은 변경 불가
+    if (isCompleted) return;
     setEdited({
       ...edited,
       location: `${province} ${city ?? ''}`.trim(),
@@ -42,12 +41,10 @@ export default function LocationSection({ edited, setEdited, isCompleted = false
 
   return (
     <>
-      {/* 버튼은 항상 활성화 */}
       <Button variant="outlined" onClick={() => setLocationModalOpen(true)}>
         위치 변경
       </Button>
 
-      {/* 모달 */}
       <Modal open={locationModalOpen} onClose={() => setLocationModalOpen(false)}>
         <Box sx={{ width: 650, bgcolor: 'white', p: 3, mx: 'auto', mt: '5%', borderRadius: 2 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>위치 선택</Typography>
@@ -83,7 +80,6 @@ export default function LocationSection({ edited, setEdited, isCompleted = false
         </Box>
       </Modal>
 
-      {/* 읽기 전용 미리보기 */}
       <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, mt: 2 }}>
         <Stack spacing={2}>
           <TextField

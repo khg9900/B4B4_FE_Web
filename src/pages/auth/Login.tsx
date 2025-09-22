@@ -1,4 +1,3 @@
-// src/pages/Login.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Box, Paper, Typography, TextField, Button, Checkbox, FormControlLabel,
@@ -10,14 +9,12 @@ import { getMyInfoCached } from '../../api/user';
 import { saveTokens, getAccessToken, getCurrentRole, type UserRole } from '../../auth/tokenStore';
 import { registerDeviceAfterLogin } from '../../lib/fcm';
 
-// 역할별 기본 랜딩 경로
 function preferredLanding(role: UserRole | null): string {
   if (role === 'GOV') return '/dashboard';
   if (role === 'NGO') return '/posts';
   return '/login';
 }
 
-// 이 역할이 해당 경로에 접근 가능한지(간단 매핑)
 function canRoleAccessPath(role: UserRole | null, path: string): boolean {
   if (!role) return false;
   if (path.startsWith('/dashboard')) return role === 'GOV';
@@ -34,7 +31,6 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 저장된 아이디 불러오기 + 이미 로그인된 상태면 역할별 기본 페이지로 보냄
   useEffect(() => {
     const saved = localStorage.getItem('savedId');
     if (saved) {
@@ -58,7 +54,6 @@ export default function Login() {
 
     setSubmitting(true);
     try {
-      // 1. 로그인 API 호출
       const res = await api.post('/auth/login', { email, password });
       const payload = res.data?.payload ?? res.data;
       const accessToken: string | undefined = payload?.accessToken;
@@ -66,29 +61,21 @@ export default function Login() {
 
       if (!accessToken) throw new Error('토큰이 응답에 없습니다.');
 
-      // 2. 기존 localStorage 초기화
       localStorage.clear();
 
-      // 3. 토큰 저장
       saveTokens(accessToken, refreshToken);
 
-      // 4. 아이디 저장 옵션 처리
       if (remember) {
         localStorage.setItem('savedId', email);
       }
 
-      // 5. FCM 기기 등록
       await registerDeviceAfterLogin();
 
-      // 6. 유저 정보 캐시 조회 및 저장
-      // force: true → 반드시 서버에서 새로 받아 로컬/메모리 캐시 업데이트
       await getMyInfoCached({ force: true });
 
-      // 7. 리다이렉트
       const role = getCurrentRole();
       let target = preferredLanding(role);
 
-      // 보호 라우트에서 튕겨서 온 경우 복구
       const from = (location.state as any)?.from?.pathname as string | undefined;
       if (from && canRoleAccessPath(role, from)) target = from;
 

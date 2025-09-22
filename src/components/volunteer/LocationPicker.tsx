@@ -15,7 +15,6 @@ type Props = {
   setLongitude: (v: string) => void;
   modalOpen: boolean;
 };
-// coord2regioncode SDK 결과 기반 특수 처리
 export function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
   let province = region1;
   let city: string | null = region2;
@@ -25,7 +24,7 @@ export function parseRegion(region1: string, region2: string): { province: strin
 }
 
 export default function LocationPicker({
-  province, city, placeName, latitude, longitude,
+  latitude, longitude,
   setProvince, setCity, setPlaceName, setLatitude, setLongitude
 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -34,7 +33,6 @@ export default function LocationPicker({
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 지도 초기화 및 마커
   useEffect(() => {
     if (!mapRef.current) return;
     let map: any;
@@ -47,7 +45,6 @@ export default function LocationPicker({
 
       markerRef.current = new kakao.maps.Marker({ map, position: center });
 
-      // 지도 클릭
       kakao.maps.event.addListener(map, 'click', (mouseEvent: any) => {
         const latlng = mouseEvent.latLng;
         markerRef.current.setPosition(latlng);
@@ -68,7 +65,6 @@ export default function LocationPicker({
     });
   }, [mapRef, latitude, longitude]);
 
-  // 장소 검색
   const handleSearch = async () => {
     if (!searchKeyword) return;
     setLoading(true);

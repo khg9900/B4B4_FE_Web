@@ -1,4 +1,3 @@
-// src/components/volunteer/volunteer-detail/VolunteerDetailModal.tsx
 import { useState } from 'react';
 import {
   Stack,
@@ -133,7 +132,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
             <Button
               onClick={handleSave}
               variant="contained"
-              disabled={saving || deleting || isSubmitDisabled || isCompleted} // DB 기준
+              disabled={saving || deleting || isSubmitDisabled || isCompleted}
               sx={{ bgcolor: '#ff7c33', ':hover': { bgcolor: '#ff6a14' } }}
               startIcon={saving ? <CircularProgress size={18} color="inherit" /> : undefined}
             >
@@ -160,7 +159,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
         <Stack spacing={2.5}>
           <TitleSection
             title={edited.title}
-            onChange={isCompleted ? undefined : handleChange} // DB 기준
+            onChange={isCompleted ? undefined : handleChange}
           />
 
           <ContentSection
@@ -197,7 +196,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave, onDe
           <LocationSection
             edited={edited}
             setEdited={setEdited}
-            isCompleted={isCompleted} // DB 기준
+            isCompleted={isCompleted}
           />
 
           <CapacitySection

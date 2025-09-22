@@ -45,6 +45,7 @@ function toDetailData(p: ListPost): DetailPost {
     attendanceRadius: 0,
   };
 }
+
 export function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
   let province = region1;
   let city: string | null = region2;
@@ -52,6 +53,7 @@ export function parseRegion(region1: string, region2: string): { province: strin
   else if (region2.endsWith('군')) city = region2;
   return { province, city };
 }
+
 type VolunteerTableProps = {
   rows: ListPost[];
   onRowClick?: (id: number) => void;
