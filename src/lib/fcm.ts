@@ -1,7 +1,7 @@
-// src/lib/fcm.ts
 import { isSupported, getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { app } from './firebase';
 import { api } from '../api/http';
+import { logger } from '../utils/logger'; // ← 경로 조정
 
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY as string;
 
@@ -24,9 +24,14 @@ function getBrowserDeviceMeta() {
 
 async function ensureSw(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) return null;
-  const existing = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
-  if (existing) return existing;
-  return navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  try {
+    const existing = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+    if (existing) return existing;
+    return await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  } catch (e) {
+    logger.capture('FCM:ensureSw', e);
+    return null;
+  }
 }
 
 /**
@@ -37,10 +42,8 @@ async function ensureSw(): Promise<ServiceWorkerRegistration | null> {
  */
 export async function registerDeviceAfterLogin(): Promise<string | null> {
   try {
-    if (!(await isSupported())) {
-      console.info('[FCM] not supported in this browser');
-      return null;
-    }
+    const supported = await isSupported();
+    if (!supported) return null;
 
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return null;
@@ -65,36 +68,38 @@ export async function registerDeviceAfterLogin(): Promise<string | null> {
 
     return token;
   } catch (err) {
-    console.error('[FCM] registerDeviceAfterLogin error:', err);
+    logger.capture('FCM:registerDeviceAfterLogin', err);
     return null;
   }
 }
 
 /**
  * 앱 구동 시 1회 호출:
- *  - 탭이 활성(포그라운드)일 때 수신되는 메시지 처리
- *  - 서비스워커를 통해 OS 알림을 띄워 배경과 동일 UX 제공
+ *  - 탭 포그라운드 수신 메시지를 OS 알림으로 노출
  */
 export async function initForegroundFcmListener() {
-  if (!(await isSupported())) return;
+  try {
+    const supported = await isSupported();
+    if (!supported) return;
 
-  const messaging = getMessaging(app);
-  onMessage(messaging, async (payload) => {
-    const title = payload.notification?.title ?? '알림';
-    const body  = payload.notification?.body ?? '';
-    const icon  = (payload.notification as any)?.icon;
+    const messaging = getMessaging(app);
+    onMessage(messaging, async (payload) => {
+      const title = payload.notification?.title ?? '알림';
+      const body  = payload.notification?.body ?? '';
+      const icon  = (payload.notification as any)?.icon;
 
-    try {
-      const reg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
-      if (reg) {
-        // OS 알림(포그라운드에서도 동일하게)
-        await reg.showNotification(title, { body, icon });
-      } else if (Notification.permission === 'granted') {
-        // 매우 드문 경우: SW 없으면 페이지에서 직접
-        new Notification(title, { body, icon });
+      try {
+        const reg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+        if (reg) {
+          await reg.showNotification(title, { body, icon });
+        } else if (Notification.permission === 'granted') {
+          new Notification(title, { body, icon });
+        }
+      } catch (e) {
+        logger.capture('FCM:showNotification', e, { title, body });
       }
-    } catch (e) {
-      console.warn('[FCM] showNotification failed', e);
-    }
-  });
+    });
+  } catch (e) {
+    logger.capture('FCM:initForegroundFcmListener', e);
+  }
 }

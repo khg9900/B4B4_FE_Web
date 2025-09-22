@@ -1,4 +1,3 @@
-//volunteer.ts
 // === 화면 라벨(한글) ===
 export type PostCategory = '봉사활동 모집' | '구호물품 지원';
 export type PostStatus   = '모집 중' | '모집 마감' | '봉사 완료';

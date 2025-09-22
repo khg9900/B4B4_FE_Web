@@ -1,4 +1,3 @@
-// src/pages/SignupNgo.tsx
 import { Box, Paper, Stack, Typography, TextField, Button, Alert } from '@mui/material';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';

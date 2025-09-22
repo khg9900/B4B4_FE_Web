@@ -1,4 +1,3 @@
-// src/components/VolunteerDetailModal.tsx
 import React, { useEffect, useState } from 'react';
 import {
   TextField, Typography, Button, Select, MenuItem,
@@ -12,6 +11,7 @@ import AppDialog from './AppDialog';
 import LocationPicker from '../components/volunteer/LocationPicker';
 import type { DetailPost, PostStatus, TeamStatus } from '../types/volunteer';
 import { fetchPostTeams, fetchTeamParticipants, updateParticipantAttendance } from '../api/volunteerPosts';
+import { logger } from '../../utils/logger';
 
 type Props = {
   open: boolean;
@@ -72,7 +72,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
         const t = await fetchPostTeams(postId);
         if (!ignore) setTeams(t);
       } catch (e) {
-        console.error('팀 조회 실패', e);
+        logger.capture('VolunteerDetailModal:loadTeams', e, { postId });
         if (!ignore) setTeams([]);
       } finally {
         if (!ignore) setTeamsLoading(false);
@@ -89,7 +89,12 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
     if (!name) return;
     setEdited(prev => ({ ...prev, [name]: value }));
   };
-  const { province, city } = parseRegion(edited.location?.split(' ')[0] ?? '', edited.location?.split(' ').slice(1).join(' ') ?? '');
+
+  const { province, city } = parseRegion(
+    edited.location?.split(' ')[0] ?? '',
+    edited.location?.split(' ').slice(1).join(' ') ?? ''
+  );
+
   const requiredFilled =
     edited.title &&
     edited.content &&
@@ -116,7 +121,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
       await onSave(edited);
       onClose();
     } catch (e) {
-      console.error(e);
+      logger.capture('VolunteerDetailModal:handleSave', e, { edited });
       alert('수정에 실패했습니다.');
     } finally {
       setSaving(false);
@@ -136,7 +141,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
         const res = await fetchTeamParticipants(postId, teamId);
         setTeamMembers(prev => ({ ...prev, [teamId]: res.participants || [] }));
       } catch (e) {
-        console.error('팀원 조회 실패', e);
+        logger.capture('VolunteerDetailModal:fetchTeamParticipants', e, { postId, teamId });
         setTeamMembers(prev => ({ ...prev, [teamId]: [] }));
       } finally {
         setTeamLoading(prev => ({ ...prev, [teamId]: false }));
@@ -158,7 +163,9 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
         return { ...prev, [teamId]: updated };
       });
     } catch (e) {
-      console.error('출석 상태 변경 실패', e);
+      logger.capture('VolunteerDetailModal:updateAttendance', e, {
+        postId, teamId, participantId: p.participantId, nextStatus
+      });
       alert('상태 변경에 실패했습니다.');
     } finally {
       setMemberSaving(prev => ({ ...prev, [p.participantId]: false }));
@@ -174,9 +181,9 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
     teamCount === 0
       ? 0
       : (() => {
-        const set = new Set(teams.map(t => t.maxCapacity));
-        return set.size === 1 ? teams[0].maxCapacity : undefined;
-      })();
+          const set = new Set(teams.map(t => t.maxCapacity));
+          return set.size === 1 ? teams[0].maxCapacity : undefined;
+        })();
 
   return (
     <AppDialog
@@ -237,7 +244,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
           좌표: 위도 {edited.latitude ?? '-'}, 경도 {edited.longitude ?? '-'}
         </Typography>
 
-        {/* ✅ 지도 기능 추가 */}
         <Button variant="outlined" onClick={() => setLocationModalOpen(true)}>
           위치 변경
         </Button>
@@ -245,7 +251,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
           <Box sx={{ width: 600, bgcolor: 'white', p: 2, mx: 'auto', mt: '10%', borderRadius: 2 }}>
             <LocationPicker
               province={province}
-              city={city ?? ''} // null이면 '' 처리
+              city={city ?? ''}
               placeName={edited.placeName ?? ''}
               latitude={String(edited.latitude ?? '')}
               longitude={String(edited.longitude ?? '')}
@@ -260,7 +266,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
                 setEdited((prev) => {
                   const parts = (prev.location ?? '').split(' ');
                   const provincePart = parts[0] ?? '';
-                  const safeCity = v ?? ''; // null이면 ''
+                  const safeCity = v ?? '';
                   return { ...prev, location: `${provincePart} ${safeCity}`.trim() };
                 })
               }
@@ -270,12 +276,10 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
               modalOpen={locationModalOpen}
             />
 
-
             <Button onClick={() => setLocationModalOpen(false)} sx={{ mt: 2 }}>닫기</Button>
           </Box>
         </Modal>
 
-        {/* 출석 정책 */}
         <Typography variant="h6" sx={{ mt: 1 }}>출석 정책</Typography>
         <Stack direction="row" spacing={2}>
           <Box flex={1}><TextField fullWidth type="time" label="출석 시작 시간" name="attendanceStartTime" value={edited.attendanceStartTime ?? ''} onChange={handleChange} InputLabelProps={{ shrink: true }} /></Box>
@@ -285,7 +289,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
           <TextField fullWidth type="number" inputProps={{ min: 0 }} label="출석 인정 반경" name="attendanceRadius" value={edited.attendanceRadius ?? 0} onChange={handleChange} InputProps={{ endAdornment: <InputAdornment position="end">m</InputAdornment> }} />
         </Box>
 
-        {/* 팀 운영 */}
         <Typography variant="h6" sx={{ mt: 1 }}>팀 운영</Typography>
         <Stack direction="row" spacing={2}>
           <Box flex={1}><TextField fullWidth label="팀 개수" value={teamCount} disabled /></Box>

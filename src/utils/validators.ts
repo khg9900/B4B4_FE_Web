@@ -1,4 +1,3 @@
-// src/utils/validators.ts
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 // 01[0,1,6,7,8,9]-XXX(X)-XXXX (하이픈은 선택)
