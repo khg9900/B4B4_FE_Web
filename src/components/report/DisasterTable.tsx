@@ -24,6 +24,7 @@ import {
 } from '../../types/report';
 import { fetchReportsSlice, updateReportStatus } from '../../api/reports';
 import { getMyInfoCached } from '../../api/user';
+import { logger } from '../../utils/logger';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
 
@@ -87,10 +88,12 @@ export default function DisasterTable() {
         }));
         if (province && city) window.scrollTo({ top: 0, behavior: 'auto' });
       } catch (e) {
-        console.error('[DisasterTable] getMyInfoCached failed:', e);
+        logger.capture('DisasterTable:getMyInfoCached', e);
       }
     })();
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -120,10 +123,10 @@ export default function DisasterTable() {
       });
       setItems(slice.content);
       setHasNext(slice.hasNext);
-
       window.scrollTo({ top: 0, behavior: 'auto' });
     } catch (e: any) {
       setErrorMsg(e?.message || '목록 조회 실패');
+      logger.capture('DisasterTable:load', e, { query });
     } finally {
       setLoading(false);
     }
@@ -150,7 +153,7 @@ export default function DisasterTable() {
       await updateReportStatus(id, newStatus);
     } catch (e) {
       await load();
-      console.error(e);
+      logger.capture('DisasterTable:updateReportStatus', e, { id, newStatus });
     }
   };
 
@@ -161,12 +164,10 @@ export default function DisasterTable() {
     <Box px={3} py={2} sx={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
       <div ref={topRef} />
 
-      {/* 타이틀 */}
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
         재난 신고 목록
       </Typography>
 
-      {/* 페이지 라벨(좌) + 필터/표시개수(우) */}
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         alignItems={{ xs: 'flex-start', sm: 'center' }}
@@ -220,7 +221,6 @@ export default function DisasterTable() {
         </Typography>
       )}
 
-      {/* 표 */}
       <Paper elevation={1}>
         <Table>
           <TableHead>
@@ -272,32 +272,17 @@ export default function DisasterTable() {
         </Table>
       </Paper>
 
-      {/* 하단 페이지 컨트롤 */}
       <Stack direction="row" spacing={1.5} justifyContent="center" mt={2}>
-        <Button
-          variant="outlined"
-          onClick={goPrev}
-          disabled={loading || query.page === 0}
-          sx={{ mr: 1 }}
-        >
+        <Button variant="outlined" onClick={goPrev} disabled={loading || query.page === 0} sx={{ mr: 1 }}>
           이전
         </Button>
-        <Button
-          variant="contained"
-          onClick={goNext}
-          disabled={loading || !hasNext}
-        >
+        <Button variant="contained" onClick={goNext} disabled={loading || !hasNext}>
           다음
         </Button>
       </Stack>
 
       {modalOpen && selected && (
-        <DisasterDetailModal
-          open
-          onClose={closeModal}
-          data={selected}
-          onStatusChange={handleStatusChange}
-        />
+        <DisasterDetailModal open onClose={closeModal} data={selected} onStatusChange={handleStatusChange} />
       )}
     </Box>
   );

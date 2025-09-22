@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import { fetchDisasterMarkers, type DisasterMarker, disasterColors } from '../../api/reports';
 import { loadKakaoMap } from '../../utils/kakaoLoader';
+import { logger } from '../../utils/logger';
 
 declare global { interface Window { kakao: any; } }
 
@@ -47,15 +48,16 @@ const DisasterMap: React.FC<Props> = ({ height = 420 }) => {
 
   const loadMarkers = useCallback(async () => {
     if (!map) return;
+
+    // 컨텍스트 수집
+    const center = map.getCenter();
+    const bounds = map.getBounds();
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const centerLng = center.getLng();
+    const centerLat = center.getLat();
+
     try {
-      const center = map.getCenter();
-      const bounds = map.getBounds();
-      const sw = bounds.getSouthWest();
-      const ne = bounds.getNorthEast();
-
-      const centerLng = center.getLng();
-      const centerLat = center.getLat();
-
       clearOverlays();
 
       // 서버 시그니처 유지 (longitude, latitude)
@@ -113,7 +115,10 @@ const DisasterMap: React.FC<Props> = ({ height = 420 }) => {
 
       overlaysRef.current = newOverlays;
     } catch (err) {
-      console.error('🔥 마커 로딩 실패:', err);
+      logger.capture('DisasterMap:loadMarkers', err, {
+        centerLat, centerLng,
+        swLat: sw.getLat(), swLng: sw.getLng(), neLat: ne.getLat(), neLng: ne.getLng(),
+      });
       clearOverlays();
       setRows([]);
     }
@@ -130,7 +135,7 @@ const DisasterMap: React.FC<Props> = ({ height = 420 }) => {
         });
         setMap(mapInstance);
       } catch (e) {
-        console.error('카카오 지도 로딩 실패', e);
+        logger.capture('DisasterMap:initKakao', e);
       }
     })();
   }, []);

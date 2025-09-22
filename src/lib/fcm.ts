@@ -1,6 +1,7 @@
 import { isSupported, getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { app } from './firebase';
 import { api } from '../api/http';
+import { logger } from '../utils/logger'; // ← 경로 조정
 
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY as string;
 
@@ -23,17 +24,20 @@ function getBrowserDeviceMeta() {
 
 async function ensureSw(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) return null;
-  const existing = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
-  if (existing) return existing;
-  return navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  try {
+    const existing = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+    if (existing) return existing;
+    return await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  } catch (e) {
+    logger.capture('FCM:ensureSw', e);
+    return null;
+  }
 }
 
 export async function registerDeviceAfterLogin(): Promise<string | null> {
   try {
-    if (!(await isSupported())) {
-      console.info('[FCM] not supported in this browser');
-      return null;
-    }
+    const supported = await isSupported();
+    if (!supported) return null;
 
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return null;
@@ -58,29 +62,34 @@ export async function registerDeviceAfterLogin(): Promise<string | null> {
 
     return token;
   } catch (err) {
-    console.error('[FCM] registerDeviceAfterLogin error:', err);
+    logger.capture('FCM:registerDeviceAfterLogin', err);
     return null;
   }
 }
 
 export async function initForegroundFcmListener() {
-  if (!(await isSupported())) return;
+  try {
+    const supported = await isSupported();
+    if (!supported) return;
 
-  const messaging = getMessaging(app);
-  onMessage(messaging, async (payload) => {
-    const title = payload.notification?.title ?? '알림';
-    const body  = payload.notification?.body ?? '';
-    const icon  = (payload.notification as any)?.icon;
+    const messaging = getMessaging(app);
+    onMessage(messaging, async (payload) => {
+      const title = payload.notification?.title ?? '알림';
+      const body  = payload.notification?.body ?? '';
+      const icon  = (payload.notification as any)?.icon;
 
-    try {
-      const reg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
-      if (reg) {
-        await reg.showNotification(title, { body, icon });
-      } else if (Notification.permission === 'granted') {
-        new Notification(title, { body, icon });
+      try {
+        const reg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+        if (reg) {
+          await reg.showNotification(title, { body, icon });
+        } else if (Notification.permission === 'granted') {
+          new Notification(title, { body, icon });
+        }
+      } catch (e) {
+        logger.capture('FCM:showNotification', e, { title, body });
       }
-    } catch (e) {
-      console.warn('[FCM] showNotification failed', e);
-    }
-  });
+    });
+  } catch (e) {
+    logger.capture('FCM:initForegroundFcmListener', e);
+  }
 }

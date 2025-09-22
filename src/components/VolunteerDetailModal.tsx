@@ -11,6 +11,7 @@ import AppDialog from './AppDialog';
 import LocationPicker from '../components/volunteer/LocationPicker';
 import type { DetailPost, PostStatus, TeamStatus } from '../types/volunteer';
 import { fetchPostTeams, fetchTeamParticipants, updateParticipantAttendance } from '../api/volunteerPosts';
+import { logger } from '../../utils/logger';
 
 type Props = {
   open: boolean;
@@ -71,7 +72,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
         const t = await fetchPostTeams(postId);
         if (!ignore) setTeams(t);
       } catch (e) {
-        console.error('팀 조회 실패', e);
+        logger.capture('VolunteerDetailModal:loadTeams', e, { postId });
         if (!ignore) setTeams([]);
       } finally {
         if (!ignore) setTeamsLoading(false);
@@ -88,7 +89,12 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
     if (!name) return;
     setEdited(prev => ({ ...prev, [name]: value }));
   };
-  const { province, city } = parseRegion(edited.location?.split(' ')[0] ?? '', edited.location?.split(' ').slice(1).join(' ') ?? '');
+
+  const { province, city } = parseRegion(
+    edited.location?.split(' ')[0] ?? '',
+    edited.location?.split(' ').slice(1).join(' ') ?? ''
+  );
+
   const requiredFilled =
     edited.title &&
     edited.content &&
@@ -115,7 +121,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
       await onSave(edited);
       onClose();
     } catch (e) {
-      console.error(e);
+      logger.capture('VolunteerDetailModal:handleSave', e, { edited });
       alert('수정에 실패했습니다.');
     } finally {
       setSaving(false);
@@ -135,7 +141,7 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
         const res = await fetchTeamParticipants(postId, teamId);
         setTeamMembers(prev => ({ ...prev, [teamId]: res.participants || [] }));
       } catch (e) {
-        console.error('팀원 조회 실패', e);
+        logger.capture('VolunteerDetailModal:fetchTeamParticipants', e, { postId, teamId });
         setTeamMembers(prev => ({ ...prev, [teamId]: [] }));
       } finally {
         setTeamLoading(prev => ({ ...prev, [teamId]: false }));
@@ -157,7 +163,9 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
         return { ...prev, [teamId]: updated };
       });
     } catch (e) {
-      console.error('출석 상태 변경 실패', e);
+      logger.capture('VolunteerDetailModal:updateAttendance', e, {
+        postId, teamId, participantId: p.participantId, nextStatus
+      });
       alert('상태 변경에 실패했습니다.');
     } finally {
       setMemberSaving(prev => ({ ...prev, [p.participantId]: false }));
@@ -173,9 +181,9 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
     teamCount === 0
       ? 0
       : (() => {
-        const set = new Set(teams.map(t => t.maxCapacity));
-        return set.size === 1 ? teams[0].maxCapacity : undefined;
-      })();
+          const set = new Set(teams.map(t => t.maxCapacity));
+          return set.size === 1 ? teams[0].maxCapacity : undefined;
+        })();
 
   return (
     <AppDialog
@@ -267,7 +275,6 @@ export default function VolunteerDetailModal({ open, onClose, data, onSave }: Pr
               setLongitude={(v: string) => setEdited(prev => ({ ...prev, longitude: parseFloat(v) }))}
               modalOpen={locationModalOpen}
             />
-
 
             <Button onClick={() => setLocationModalOpen(false)} sx={{ mt: 2 }}>닫기</Button>
           </Box>
