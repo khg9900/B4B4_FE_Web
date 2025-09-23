@@ -43,14 +43,14 @@ const getStatusColor = (status: ReportStatusEN) => {
 
 export default function DisasterTable() {
   const [query, setQuery] = useState<{
-    si: string;
-    gu: string;
+    province: string;
+    city: string; 
     status?: ReportStatusEN;
     page: number;
     size: number;
   }>({
-    si: '',
-    gu: '',
+    province: '',
+    city: '',
     page: 0,
     size: 10,
   });
@@ -62,6 +62,7 @@ export default function DisasterTable() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | ReportStatusEN>('ALL');
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState<ReportDto | null>(null);
+
   const topRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,15 +78,15 @@ export default function DisasterTable() {
       try {
         const me = await getMyInfoCached();
         if (ignore) return;
-        const si = me.province || '';
-        const gu = me.city || '';
+        const province = me.province || '';
+        const city = me.city || '';
         setQuery((q) => ({
           ...q,
-          si,
-          gu,
+          province,
+          city,
           page: 0,
         }));
-        if (si && gu) window.scrollTo({ top: 0, behavior: 'auto' });
+        if (province && city) window.scrollTo({ top: 0, behavior: 'auto' });
       } catch (e) {
         logger.capture('DisasterTable:getMyInfoCached', e);
       }
@@ -108,14 +109,14 @@ export default function DisasterTable() {
   }, [query.page]);
 
   const load = useCallback(async () => {
-    if (!query.si) return;
+    if (!query.province) return;
 
     try {
       setLoading(true);
       setErrorMsg('');
       const slice = await fetchReportsSlice({
-        si: query.si,
-        gu: query.gu ?? '',
+        province: query.province,
+        city: query.city ?? '',
         status: query.status,
         page: query.page,
         size: query.size,
@@ -263,7 +264,7 @@ export default function DisasterTable() {
             {!loading && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                  {query.si ? '데이터가 없습니다.' : '지역 정보를 불러오는 중…'}
+                  {query.province ? '데이터가 없습니다.' : '지역 정보를 불러오는 중…'}
                 </TableCell>
               </TableRow>
             )}

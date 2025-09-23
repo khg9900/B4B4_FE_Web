@@ -11,7 +11,6 @@ import {
 export default function SignupGov() {
   const navigate = useNavigate();
 
-  // 지역 옵션 (CSV)
   const { provinces, citiesByProvince, loading: regionLoading, error: regionError } = useRegionsCsv('/regions.csv');
 
   const [email, setEmail] = useState('');
@@ -52,7 +51,6 @@ export default function SignupGov() {
     try {
       setSubmitting(true);
 
-      // 세종 등 시군구가 없는 시/도는 빈 문자열로 전송(백엔드 선택사항 필드)
       const body = {
         email,
         password: pw,
@@ -60,12 +58,11 @@ export default function SignupGov() {
         phoneNumber: phone,
         userRole: 'GOV' as const,
         province: province ?? '',
-        city: cityRequired ? (city ?? '') : '', // 없으면 빈 문자열
+        city: cityRequired ? (city ?? '') : '',
       };
 
       await signup(body);
 
-      // 성공 시 로그인으로 이동
       alert('회원가입이 완료되었습니다. 로그인 해 주세요.');
       navigate('/login', { replace: true });
     } catch (err: any) {
@@ -145,7 +142,7 @@ export default function SignupGov() {
                 onChange={(_, v) => {
                   setProvince(v);
                   const nextOptions = v ? (citiesByProvince[v] ?? []).filter(Boolean) : [];
-                  setCity(nextOptions.length ? null : ''); // 선택 필요 없으면 빈 문자열로
+                  setCity(nextOptions.length ? null : '');
                 }}
                 renderInput={(p) => (
                   <TextField
@@ -164,7 +161,7 @@ export default function SignupGov() {
 
               <Autocomplete
                 options={cityOptions}
-                value={cityOptions.length ? city : ''} // 옵션 없으면 빈 값 고정
+                value={cityOptions.length ? city : ''}
                 onChange={(_, v) => setCity(v)}
                 disabled={!province || !cityRequired}
                 renderInput={(p) => (

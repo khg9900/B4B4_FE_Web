@@ -14,7 +14,7 @@ export default function TitleSection({ title, onChange }: Props) {
       name="title"
       value={title}
       onChange={onChange}
-      disabled={!onChange} // onChange가 없으면 읽기 전용
+      disabled={!onChange} 
     />
   );
 }

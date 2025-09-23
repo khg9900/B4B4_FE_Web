@@ -28,7 +28,7 @@ export default function Topbar() {
     let ignore = false;
     (async () => {
       try {
-        const me = await getMyInfoCached(); // ← 캐시 사용
+        const me = await getMyInfoCached();
         if (!ignore && me?.nickname) setNickname(me.nickname);
       } catch {/* 실패 시 fallback 사용 */}
     })();

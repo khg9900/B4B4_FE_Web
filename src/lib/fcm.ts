@@ -34,12 +34,6 @@ async function ensureSw(): Promise<ServiceWorkerRegistration | null> {
   }
 }
 
-/**
- * 로그인 직후 호출:
- *  - 알림 권한 요청
- *  - FCM 토큰 발급
- *  - 서버 /devices 등록
- */
 export async function registerDeviceAfterLogin(): Promise<string | null> {
   try {
     const supported = await isSupported();
@@ -59,7 +53,7 @@ export async function registerDeviceAfterLogin(): Promise<string | null> {
     const { model, osVersion } = getBrowserDeviceMeta();
 
     await api.post('/devices', {
-      type: 'DESKTOP', // 웹은 DESKTOP로 통일(백엔드 enum 기준)
+      type: 'DESKTOP',
       os,
       osVersion,
       model,
@@ -73,10 +67,6 @@ export async function registerDeviceAfterLogin(): Promise<string | null> {
   }
 }
 
-/**
- * 앱 구동 시 1회 호출:
- *  - 탭 포그라운드 수신 메시지를 OS 알림으로 노출
- */
 export async function initForegroundFcmListener() {
   try {
     const supported = await isSupported();

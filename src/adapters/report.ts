@@ -1,4 +1,3 @@
-// src/adapters/report.ts
 import type { ReportDto, SliceResponse } from '../types/report';
 
 export function toSlice(resp: any): SliceResponse<any> {

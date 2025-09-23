@@ -4,10 +4,9 @@ import type { ReportDto, ReportStatusEN, SliceResponse } from '../types/report';
 
 const REPORT_BASE = '/reports';
 
-/** 슬라이스 조회 (페이지/상태/지역별) */
 export async function fetchReportsSlice(params: {
-  si: string;
-  gu: string;
+  province: string;
+  city: string;
   status?: ReportStatusEN;
   page?: number;
   size?: number;
@@ -19,7 +18,6 @@ export async function fetchReportsSlice(params: {
   return { ...s, content: s.content.map(toReport) };
 }
 
-/** 상태 변경 PATCH /reports/{id}/status?newStatus=... */
 export async function updateReportStatus(id: number, status: ReportStatusEN) {
   const res = await api.patch(`${REPORT_BASE}/${id}/status`, null, {
     params: { newStatus: status },
@@ -27,7 +25,6 @@ export async function updateReportStatus(id: number, status: ReportStatusEN) {
   return res.data?.payload ?? res.data;
 }
 
-/** 오늘 집계 */
 export type TodayStats = {
   pending: number;
   received: number;
@@ -44,9 +41,8 @@ export async function fetchTodayReportStats(): Promise<TodayStats> {
   };
 }
 
-/** 히트맵 관련 */
 export type DisasterMarker = {
-  disasterType: string;   // EARTHQUAKE, FLOOD 등
+  disasterType: string;
   status: 'PENDING' | 'RECEIVED' | 'CLOSED';
   count: number;
   latitude: number;
@@ -64,7 +60,6 @@ export const disasterColors: Record<string, string> = {
   BUILDING_COLLAPSE: '#6A5ACD',
 };
 
-/** 위치 기반 마커 조회 */
 export async function fetchDisasterMarkers(
   latitude: number,
   longitude: number,

@@ -13,8 +13,8 @@ import LocationModal from './LocationModal';
 import type { CreatePostRequest } from '../../../types/volunteer';
 
 type Props = {
-  framed?: boolean; // 외곽 프레임 표시 여부
-  showButtons?: boolean; // 하단 버튼(취소/등록) 표시 여부
+  framed?: boolean;
+  showButtons?: boolean;
   createApi: (payload: CreatePostRequest) => Promise<any>;
   onSubmitSuccess?: (created: any) => void;
   onCancel?: () => void;
@@ -43,7 +43,6 @@ export default function VolunteerForm({
     [theme.palette.mode]
   );
 
-  // 알림용 검증 결과
   const alerts = form.getAlerts();
 
   const handleSubmit = async () => {
@@ -85,7 +84,6 @@ export default function VolunteerForm({
     }
   };
 
-  // framed 로직에 따라 외부 스타일 변경
   const boxSx = framed
     ? { p: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }
     : { p: 2.5, borderRadius: 2, backgroundColor: 'transparent' };

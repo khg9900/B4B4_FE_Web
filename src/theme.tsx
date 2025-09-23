@@ -7,13 +7,12 @@ const theme = createTheme({
   palette: {
     primary: {
       main: ORANGE_MAIN,
-      dark: ORANGE_HOVER,      // contained hover 색
+      dark: ORANGE_HOVER,
       contrastText: '#fff',
     },
     secondary: { main: '#f5a623' },
   },
   components: {
-    /* 버튼 공통 */
     MuiButton: {
       defaultProps: { disableElevation: true },
       styleOverrides: {
@@ -23,7 +22,6 @@ const theme = createTheme({
           '&:focus, &.Mui-focusVisible': { outline: 'none', boxShadow: 'none' },
         },
 
-        /* 저장(Contained Primary): 회색 오버레이 X, 글로우 X */
         containedPrimary: {
           backgroundColor: ORANGE_MAIN,
           boxShadow: 'none',
@@ -31,7 +29,6 @@ const theme = createTheme({
           '&:active':  { backgroundColor: ORANGE_HOVER, boxShadow: 'none' },
         },
 
-        /* 삭제/상세보기(Outlined Primary): 파란/주황 글로우 모두 제거 */
         outlinedPrimary: {
           color: ORANGE_MAIN,
           borderColor: ORANGE_MAIN,
@@ -43,7 +40,6 @@ const theme = createTheme({
       },
     },
 
-    /* 토글 버튼(상태 필터) */
     MuiToggleButtonGroup: {
       styleOverrides: { root: { columnGap: 10 } },
     },
@@ -51,7 +47,7 @@ const theme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           textTransform: 'none',
-          borderRadius: 999,         // 알약 모양
+          borderRadius: 999,
           paddingInline: 14,
           paddingBlock: 6,
           border: '1px solid',

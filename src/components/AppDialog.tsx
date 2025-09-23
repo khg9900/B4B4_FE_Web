@@ -52,7 +52,6 @@ export default function AppDialog({
         </IconButton>
       </DialogTitle>
 
-      {/* 핵심: DialogContent padding은 0으로 두고, 내부 Box에 padding 부여 */}
       <DialogContent sx={{ p: 0 }}>
         <Box sx={{ pt: 3, px: 3, pb: 3 }}>
           {children}

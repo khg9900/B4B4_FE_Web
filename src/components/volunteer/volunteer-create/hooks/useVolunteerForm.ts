@@ -1,11 +1,7 @@
-// src/components/volunteer-form/hooks/useVolunteerForm.ts
 import { useState, useMemo } from 'react';
 import type { PostCategory } from '../../../../types/volunteer';
 
 export default function useVolunteerForm() {
-  // -----------------------
-  // 상태 정의
-  // -----------------------
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<PostCategory>('봉사활동 모집');
@@ -33,9 +29,7 @@ export default function useVolunteerForm() {
   const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // -----------------------
-  // 팀당 인원 계산
-  // -----------------------
+  // 팀 당 인원 계산
   const perTeam = useMemo(() => {
     if (
       typeof totalCapacity === 'number' &&
@@ -47,17 +41,11 @@ export default function useVolunteerForm() {
     return 0;
   }, [totalCapacity, teamCount]);
 
-  // -----------------------
-  // 헬퍼: 시간 문자열 -> 분 단위
-  // -----------------------
   const parseTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);
     return h * 60 + m;
   };
 
-  // -----------------------
-  // 1. 필드 검증 (빈칸 체크)
-  // -----------------------
   const getFieldErrors = () => {
     const errors: Record<string, string> = {};
 
@@ -86,41 +74,33 @@ export default function useVolunteerForm() {
 
   const isSubmitDisabled = Object.keys(getFieldErrors()).length > 0;
 
-  // -----------------------
-  // 2. 논리/계산 체크 (알림용)
-  // -----------------------
   const getAlerts = () => {
     const alerts: Record<string, string> = {};
 
-    // 봉사 일자: 오늘 이후
     if (volunteerDate) {
       const volunteer = new Date(volunteerDate);
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // 시간 제거
+      today.setHours(0, 0, 0, 0);
       if (volunteer < today)
         alerts.volunteerDate = '봉사 일자는 오늘 이후여야 합니다.';
     }
 
-    // 봉사 시간 체크
     if (volunteerStartTime && volunteerEndTime) {
       if (parseTime(volunteerStartTime) >= parseTime(volunteerEndTime)) {
         alerts.volunteerEndTime = '종료 시간은 시작 시간보다 이후여야 합니다.';
       }
     }
 
-    // 출석 시간 체크
     if (attendanceStartTime && attendanceEndTime) {
       if (parseTime(attendanceStartTime) >= parseTime(attendanceEndTime)) {
         alerts.attendanceEndTime = '출석 종료 시간은 시작 시간보다 이후여야 합니다.';
       }
     }
 
-    // 출석 반경
     if (typeof attendanceRadius === 'number' && attendanceRadius < 100) {
       alerts.attendanceRadius = '출석 반경은 최소 100m 이상이어야 합니다.';
     }
 
-    // 모집 기간 체크 (문자열 비교)
     if (recruitmentStartDate && recruitmentEndDate) {
       if (recruitmentStartDate > recruitmentEndDate) {
         alerts.recruitmentEndDate =
@@ -145,11 +125,7 @@ export default function useVolunteerForm() {
   const alerts = getAlerts();
   const isAlerted = Object.keys(alerts).length > 0;
 
-  // -----------------------
-  // 반환
-  // -----------------------
   return {
-    // 기본 정보
     title,
     setTitle,
     content,
@@ -157,7 +133,6 @@ export default function useVolunteerForm() {
     category,
     setCategory,
 
-    // 봉사 일자 & 시간
     volunteerDate,
     setVolunteerDate,
     volunteerStartTime,
@@ -165,13 +140,11 @@ export default function useVolunteerForm() {
     volunteerEndTime,
     setVolunteerEndTime,
 
-    // 모집 기간
     recruitmentStartDate,
     setRecruitmentStartDate,
     recruitmentEndDate,
     setRecruitmentEndDate,
 
-    // 위치 정보
     province,
     setProvince,
     city,
@@ -183,14 +156,12 @@ export default function useVolunteerForm() {
     longitude,
     setLongitude,
 
-    // 팀 & 인원
     totalCapacity,
     setTotalCapacity,
     teamCount,
     setTeamCount,
     perTeam,
 
-    // 출석 정책
     attendanceStartTime,
     setAttendanceStartTime,
     attendanceEndTime,
@@ -198,13 +169,11 @@ export default function useVolunteerForm() {
     attendanceRadius,
     setAttendanceRadius,
 
-    // UI 상태
     locationModalOpen,
     setLocationModalOpen,
     submitting,
     setSubmitting,
 
-    // 상태 체크
     getFieldErrors,
     getAlerts,
     alerts,

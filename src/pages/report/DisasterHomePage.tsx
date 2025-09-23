@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Box, CssBaseline, Grid, Paper, Typography, Stack, Button,
 } from '@mui/material';
@@ -50,7 +50,6 @@ function StatCard({
 }
 
 export default function DisasterHomePage() {
-  // GOV 권한 확인(라우터에서 RequireRole로 가드하지만, 한 번 더 방어)
   const claims = getClaims() as any;
   const role = claims?.userRole ?? claims?.role;
   const isGov = role === 'GOV';
@@ -59,22 +58,13 @@ export default function DisasterHomePage() {
   const [stats, setStats] = useState<TodayStats>({ pending: 0, received: 0, closed: 0 });
   const [loading, setLoading] = useState(false);
 
-  const todayLabel = useMemo(() => {
-    const d = new Date();
-    return d.toLocaleDateString('ko-KR', {
-      year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
-    });
-  }, []);
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // 위치 라벨은 내 정보에서 (표시용)
       const me = await getMyInfoCached().catch(() => null);
       const loc = me ? [me.province, me.city].filter(Boolean).join(' ') : '';
       setLocationLabel(loc || '내 관할');
 
-      // 오늘 집계는 백엔드에서 인증 사용자 기준으로 알아서 계산
       const s = await fetchTodayReportStats();
       setStats(s);
     } finally {
@@ -102,7 +92,6 @@ export default function DisasterHomePage() {
         <Topbar />
 
         <Box sx={{ px: 3, py: 2 }}>
-          {/* 헤더 */}
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             alignItems={{ xs: 'flex-start', md: 'center' }}
@@ -126,7 +115,6 @@ export default function DisasterHomePage() {
             </Stack>
           </Stack>
 
-          {/* 카드 3개: 데스크톱 3열, 모바일 1열 */}
           <Grid container spacing={2}>
             <Grid size={12}>
               <StatCard title="접수대기" count={stats.pending} color={ORANGE} loading={loading} />

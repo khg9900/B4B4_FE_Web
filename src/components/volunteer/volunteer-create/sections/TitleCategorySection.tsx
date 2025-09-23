@@ -1,5 +1,5 @@
 import React from 'react';
-import { Stack, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
+import { Stack, TextField, FormControl, InputLabel, Select, MenuItem, } from '@mui/material';
 import type { PostCategory } from '../../../../types/volunteer';
 
 type Props = {
@@ -7,7 +7,7 @@ type Props = {
   setTitle: React.Dispatch<React.SetStateAction<string>>;
   category: PostCategory;
   setCategory: React.Dispatch<React.SetStateAction<PostCategory>>;
-  errors?: { title?: string }; // 제목 오류 메시지
+  errors?: { title?: string };
 };
 
 const POST_CATEGORIES: PostCategory[] = ['봉사활동 모집', '구호물품 지원'];
@@ -20,8 +20,8 @@ export default function TitleCategorySection({ title, setTitle, category, setCat
         label="제목"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        error={!!errors?.title}        // 오류가 있으면 빨간색 표시
-        helperText={errors?.title}     // 오류 메시지 표시
+        error={!!errors?.title}
+        helperText={errors?.title}
       />
       <FormControl fullWidth>
         <InputLabel id="cat-label">카테고리</InputLabel>
@@ -37,7 +37,6 @@ export default function TitleCategorySection({ title, setTitle, category, setCat
             </MenuItem>
           ))}
         </Select>
-        {/* 카테고리 오류가 필요하면 여기에 FormHelperText 연결 가능 */}
       </FormControl>
     </Stack>
   );

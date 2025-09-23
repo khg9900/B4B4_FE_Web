@@ -7,7 +7,6 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onCreated?: (created: any) => void;
-  /** 테스트나 목 API 주입용. 생략 시 실제 API 사용 */
   createApi?: (payload: CreatePostRequest) => Promise<any>;
 };
 

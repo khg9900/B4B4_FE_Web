@@ -1,4 +1,3 @@
-// src/adapters/volunteer.ts
 import type {
   PostCategory,
   PostStatus,
@@ -10,15 +9,14 @@ import type {
   PostStatusEN,
 } from '../types/volunteer';
 
-/** 표시용 문자열 */
 const joinLocation = (province?: string, city?: string) =>
   [province, city].filter(Boolean).join(' ');
 
-/** EN ↔ KO 매핑 (서버 ↔ 화면) */
 const CAT_EN_TO_KO: Record<string, PostCategory> = {
   RECRUITMENT: '봉사활동 모집',
   SUPPORT: '구호물품 지원',
 };
+
 const CAT_KO_TO_EN: Record<PostCategory, PostCategoryEN> = {
   '봉사활동 모집': 'RECRUITMENT',
   '구호물품 지원': 'SUPPORT',
@@ -35,7 +33,6 @@ const STAT_KO_TO_EN: Record<PostStatus, PostStatusEN> = {
   '봉사 완료': 'COMPLETED',
 };
 
-/** ───────── 목록(내 글) → 테이블 행 ───────── */
 export function toListPostFromMy(s: any): ListPost {
   return {
     id: Number(s.id),
@@ -51,19 +48,17 @@ export function toListPostFromMy(s: any): ListPost {
   };
 }
 
-/** ───────── Slice 래핑 해제 (page/size/hasNext) ───────── */
 export function toSliceFromMy<T = any>(resp: any): {
   content: T[];
-  page: number;     // 0-based
+  page: number;
   size: number;
-  hasNext: boolean; // 다음 페이지 존재 여부
+  hasNext: boolean;
 } {
   const p = (resp && resp.payload) ?? resp ?? {};
   const content = Array.isArray(p.content) ? p.content : [];
-  const page = typeof p.number === 'number' ? p.number : 0; // 0-based
+  const page = typeof p.number === 'number' ? p.number : 0;
   const size = typeof p.size === 'number' ? p.size : content.length;
 
-  // Spring Slice: hasNext 없으면 last로 유추
   const hasNext =
     typeof p.hasNext === 'boolean'
       ? p.hasNext
@@ -74,11 +69,9 @@ export function toSliceFromMy<T = any>(resp: any): {
   return { content, page, size, hasNext };
 }
 
-/** ISO → 'HH:mm' */
 const toHHmm = (iso?: string | null) =>
   iso && typeof iso === 'string' && iso.length >= 16 ? iso.substring(11, 16) : (iso ?? '');
 
-/** ───────── 상세 응답 → 화면 모델 ───────── */
 export function toDetail(s: any): DetailPost {
   const loc = s.location && typeof s.location === 'object' ? s.location : {};
   const att = s.attendancePolicy && typeof s.attendancePolicy === 'object' ? s.attendancePolicy : {};
@@ -126,19 +119,16 @@ export function toDetail(s: any): DetailPost {
   };
 }
 
-/** 'YYYY-MM-DD' + 'HH:mm' → 'YYYY-MM-DDTHH:mm:00' */
 const toISODateTime = (date: string, hhmm?: string) => {
   const t = hhmm && /^\d{2}:\d{2}$/.test(hhmm) ? `${hhmm}:00` : '00:00:00';
   return `${date}T${t}`;
 };
 
-/** 'HH:mm' -> 'HH:mm:ss' */
 const toHHmmss = (t?: string | null) => {
   if (!t) return null;
   return /^\d{2}:\d{2}$/.test(t) ? `${t}:00` : t;
 };
 
-/** "시/도 구/군" → { province, city } */
 function parseRegion(region1: string, region2: string): { province: string; city: string | null } {
   let province = region1;
   let city: string | null = region2;
@@ -147,7 +137,6 @@ function parseRegion(region1: string, region2: string): { province: string; city
   return { province, city };
 }
 
-/** ───────── 등록: 화면(KO) → 서버(Create, EN) ───────── */
 export function toCreateRequest(
   form: DetailPost & { province?: string; city?: string }
 ): CreatePostRequest {
@@ -195,7 +184,6 @@ export function toCreateRequest(
   };
 }
 
-/** ───────── 수정: 화면(KO) → 서버(Update, EN) ───────── */
 export function toUpdateRequest(form: DetailPost): UpdatePostRequest {
    const { province, city } = parseRegion(form.location?.split(' ')[0] ?? '', form.location?.split(' ').slice(1).join(' ') ?? '');
 
@@ -231,7 +219,6 @@ export function toUpdateRequest(form: DetailPost): UpdatePostRequest {
   };
 }
 
-/** (옵션) 외부에서 쓸 수 있게 매핑 export */
 export const Mapping = {
   CAT_EN_TO_KO,
   CAT_KO_TO_EN,

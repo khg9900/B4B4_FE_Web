@@ -22,8 +22,8 @@ export interface ReportDto {
   city: string;
   locationLat: number;
   locationLng: number;
-  createdAt: string; // ISO
-  updatedAt: string; // ISO
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SliceResponse<T> {

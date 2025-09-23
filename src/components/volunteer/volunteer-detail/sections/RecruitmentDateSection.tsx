@@ -3,7 +3,7 @@ import { Stack, Box, TextField } from '@mui/material';
 type Props = {
   startDate?: string;
   endDate?: string;
-  onChange?: (e: any) => void; // optional
+  onChange?: (e: any) => void;
   errors?: {
     startDate?: string;
     endDate?: string;
@@ -16,7 +16,7 @@ export default function RecruitmentDateSection({
   onChange,
   errors,
 }: Props) {
-  const readOnly = !onChange; // onChange 없으면 읽기 전용
+  const readOnly = !onChange;
 
   return (
     <Stack direction="row" spacing={2}>
@@ -28,7 +28,7 @@ export default function RecruitmentDateSection({
           name="recruitmentStartDate"
           value={startDate ?? ''}
           onChange={onChange}
-          disabled={readOnly} // 읽기 전용 처리
+          disabled={readOnly}
           InputLabelProps={{ shrink: true }}
           error={!!errors?.startDate}
           helperText={errors?.startDate}
@@ -43,7 +43,7 @@ export default function RecruitmentDateSection({
           name="recruitmentEndDate"
           value={endDate ?? ''}
           onChange={onChange}
-          disabled={readOnly} // 읽기 전용 처리
+          disabled={readOnly}
           InputLabelProps={{ shrink: true }}
           error={!!errors?.endDate}
           helperText={errors?.endDate}

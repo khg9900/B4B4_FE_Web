@@ -4,7 +4,7 @@ type Props = {
   volunteerDate?: string;
   startTime?: string;
   endTime?: string;
-  onChange?: (e: any) => void; // optional
+  onChange?: (e: any) => void;
   errors?: {
     volunteerDate?: string;
     startTime?: string;
@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default function VolunteerDateSection({ volunteerDate, startTime, endTime, onChange, errors }: Props) {
-  const readOnly = !onChange; // onChange 없으면 읽기 전용
+  const readOnly = !onChange;
 
   return (
     <>

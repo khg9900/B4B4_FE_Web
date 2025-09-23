@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 type RegionRow = { province: string; city: string };
 
 function splitCsvLine(line: string): string[] {
-  // 간단 CSV 파서(따옴표/콤마 최소 대응). 데이터에 복잡한 따옴표가 많다면 papaparse 사용 권장.
   const out: string[] = [];
   let cur = '';
   let inQuotes = false;
@@ -11,7 +10,7 @@ function splitCsvLine(line: string): string[] {
     const ch = line[i];
     if (inQuotes) {
       if (ch === '"') {
-        if (line[i + 1] === '"') { cur += '"'; i++; } // 이스케이프된 "
+        if (line[i + 1] === '"') { cur += '"'; i++; }
         else { inQuotes = false; }
       } else cur += ch;
     } else {

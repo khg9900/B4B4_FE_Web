@@ -42,7 +42,6 @@ export default function SignupNgo() {
         name: org,
         phoneNumber: phone,
         userRole: 'NGO' as const,
-        // NGO는 지역 선택 없음
       };
       await signup(body);
 

@@ -9,7 +9,7 @@ type Props = {
   longitude: string;
   setLocationName: React.Dispatch<React.SetStateAction<string>>;
   onOpenModal: () => void;
-  errors?: { province?: string; city?: string; placeName?: string; latitude?: string; longitude?: string }; // 상세 장소명 오류 메시지
+  errors?: { province?: string; city?: string; placeName?: string; latitude?: string; longitude?: string };
 };
 
 export default function LocationSection({
@@ -41,8 +41,8 @@ export default function LocationSection({
             label="상세 장소명"
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
-            error={!!errors?.placeName}        // 오류가 있으면 빨간색 표시
-            helperText={errors?.placeName}     // 오류 메시지 표시
+            error={!!errors?.placeName}
+            helperText={errors?.placeName}
           />
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             좌표: 위도 {latitude ? parseFloat(latitude).toFixed(4) : '-'}, 경도 {longitude ? parseFloat(longitude).toFixed(4) : '-'}

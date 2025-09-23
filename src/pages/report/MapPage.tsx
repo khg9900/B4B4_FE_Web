@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, CssBaseline, Typography, Stack } from '@mui/material';
 import Sidebar from '../../components/report/Sidebar';
 import Topbar from '../../components/Topbar';
@@ -7,13 +7,6 @@ import HeatmapMap from '../../components/report/HeatmapMap';
 
 export default function MapPage() {
   const [locationLabel, setLocationLabel] = useState<string>('내 관할');
-
-  const todayLabel = useMemo(() => {
-    const d = new Date();
-    return d.toLocaleDateString('ko-KR', {
-      year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
-    });
-  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -42,7 +35,6 @@ export default function MapPage() {
             </Typography>
           </Stack>
 
-          {/* 지도 + 히트맵 컴포넌트 */}
           <HeatmapMap height={700} />
         </Box>
       </Box>

@@ -29,7 +29,6 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
   const [status, setStatus] = React.useState<ReportStatusEN>(data.status);
   const [saving, setSaving] = React.useState(false);
 
-  // 원본 이미지 보기 다이얼로그 상태
   const [imageOpen, setImageOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -264,7 +263,6 @@ export default function DisasterDetailModal({ open, onClose, data, onStatusChang
           <AttachmentBox imageUrl={data.imageUrl as any} videoUrl={(data as any).videoUrl as any} />
         </Section>
 
-        {/* 시간 */}
         <Section title="타임라인">
           <Grid container spacing={2.5}>
             <Grid size={12}>

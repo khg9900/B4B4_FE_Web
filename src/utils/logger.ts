@@ -1,4 +1,3 @@
-// src/utils/logger.ts
 type Level = 'debug' | 'info' | 'warn' | 'error' | 'none';
 
 function safeEnv(): Partial<Record<string,string>> {
